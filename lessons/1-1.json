@@ -1,0 +1,147 @@
+{
+ "id": "1-1",
+ "stage": 1,
+ "title": "用 Python 统计日志",
+ "intro": "\n以前你会这样查：`grep ERROR app.log | awk '{print $4}' | sort | uniq -c | sort -rn`。\n这一课用 Python 做同样的事，并且处理好「脏数据」。这是 AIOps 的第一步：**把手工查日志变成程序**。\n数据都是 `samples/demo.log`（约 4300 行，09:40 左右有一次故障）。\n",
+ "questions": [
+  "for line in f 和「把整个文件一次读进来」相比，好在哪里？如果日志有 10GB，会有什么区别？",
+  "日志里那行看不懂的乱码，如果不跳过，脚本会出什么问题？真实环境里还可能有哪些「脏数据」？",
+  "看「每个服务的错误数」结果，再翻翻日志：你觉得这次故障最先是哪个服务出的问题？为什么错误最多的服务不一定是根源？"
+ ],
+ "blocks": [
+  {
+   "id": "b1",
+   "title": "一行一行读，数行数",
+   "body": "日志每一行的格式：\n\n```\n2026-11-10 09:00:00 INFO order-svc: order 10494 created by user 2996\n日期       时间     级别 服务名:    消息……\n```\n\n`for line in f` 是**流式**读取：每次只拿一行，和 `tail`、`grep` 一样，文件再大也不会把内存撑爆。",
+   "example": "with open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for i, line in enumerate(f):\n        if i >= 5:\n            break\n        print(line.strip())",
+   "tweaks": [
+    {
+     "ask": "`enumerate(f)` 是什么意思？把 `i >= 5` 改成 `i >= 2` 试试。",
+     "answer": "`enumerate` 在拿出每一行的同时，给你一个从 0 开始的编号 `i`。改成 2 就只打印前 2 行。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "for i, x in enumerate([\"a\", \"b\", \"c\"]):\n    print(i, x)",
+     "explain": "`enumerate` 从 0 开始编号。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "数一数 `samples/demo.log` 一共多少行，打印：\n\n```\n一共 4314 行\n```",
+     "hints": [
+      "循环前 `n = 0`，每行加 1",
+      "最后 `print(f\"一共 {n} 行\")`"
+     ],
+     "solution": "n = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        n = n + 1\nprint(f\"一共 {n} 行\")"
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  },
+  {
+   "id": "b2",
+   "title": "跳过脏数据",
+   "body": "真实日志里经常混着：多行的报错堆栈、被截断的半行、空行、乱码。\n**靠谱的脚本遇到看不懂的行要跳过，而不是直接崩溃，也不能算错。**\n\n判断一行「像不像正常日志」的简单办法：\n\n```\nparts = line.strip().split(\" \")\nif len(parts) < 4 or not parts[0].startswith(\"20\"):\n    continue          ← 跳过这一行\n```",
+   "example": "lines = [\n    \"2026-11-10 09:00:00 INFO gateway: ok\",\n    \"this line is garbage and should be skipped\",\n    \"\",\n    \"2026-11-10 09:40:01 ERROR db: timeout\",\n]\nfor line in lines:\n    parts = line.strip().split(\" \")\n    if len(parts) < 4 or not parts[0].startswith(\"20\"):\n        print(\"跳过：\", repr(line))\n        continue\n    print(\"级别：\", parts[2])",
+   "tweaks": [
+    {
+     "ask": "去掉 `not parts[0].startswith(\"20\")` 这个条件，结果有什么不同？",
+     "answer": "乱码那一行有 8 个词，`len(parts) < 4` 拦不住它，于是它的第 3 个词 `garbage` 被当成了「级别」。只看段数不够，还要看格式。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "print(len(\"\".split(\" \")))\nprint(\"\".split(\" \"))",
+     "explain": "空字符串 split 之后是 `['']`，长度是 1，不是 0。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "统计 `samples/demo.log` 里每种**级别**各有多少条（用字典），**跳过**不像日志的行。按从多到少打印，每行 `级别 数量`：\n\n```\nINFO 3612\nERROR 493\nFATAL 163\nWARN 45\n```",
+     "hints": [
+      "先不跳过，直接统计，看看结果里多出来的奇怪「级别」是什么",
+      "用上面的判断条件 `continue` 跳过",
+      "排序：`sorted(counts.items(), key=lambda kv: kv[1], reverse=True)`"
+     ],
+     "solution": "counts = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        lv = parts[2]\n        counts[lv] = counts.get(lv, 0) + 1\nfor lv, n in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):\n    print(lv, n)"
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  },
+  {
+   "id": "b3",
+   "title": "每个服务的错误数",
+   "body": "值班时最想知道的：**哪个服务错误最多？**\n\n做法和数级别一样，只是多了一个条件：只看 ERROR 的行，用**服务名**做字典的名字。\n服务名后面带着冒号 `order-svc:`，记得去掉。\n\n这一步完成后，你就用 Python 做出了 `grep ERROR | awk '{print $4}' | sort | uniq -c | sort -rn`。",
+   "example": "lines = [\n    \"2026-11-10 09:40:01 ERROR db: timeout\",\n    \"2026-11-10 09:40:02 INFO gateway: ok\",\n    \"2026-11-10 09:40:03 ERROR db: timeout\",\n    \"2026-11-10 09:40:04 ERROR gateway: 502\",\n]\nerrors = {}\nfor line in lines:\n    parts = line.split(\" \")\n    if parts[2] != \"ERROR\":\n        continue\n    svc = parts[3].rstrip(\":\")\n    errors[svc] = errors.get(svc, 0) + 1\nprint(errors)",
+   "tweaks": [
+    {
+     "ask": "把 `!= \"ERROR\"` 改成 `not in (\"ERROR\", \"FATAL\")`，结果会怎样？",
+     "answer": "FATAL 比 ERROR 更严重，通常也要算进来。改了以后，ERROR 和 FATAL 都会被统计。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "svc = \"payment-svc:\"\nprint(svc.rstrip(\":\"), svc.strip(\":\"), svc[:-1])",
+     "explain": "三种写法都能去掉最后的冒号。`rstrip(\":\")` 最稳：没有冒号时也不会删错字。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "统计 `samples/demo.log` 里**每个服务的 ERROR 条数**（只算 ERROR，不算 FATAL），跳过脏数据，从多到少打印：\n\n```\npayment-svc 327\ngateway 152\norder-svc 14\n```",
+     "hints": [
+      "在数级别的代码基础上改：多一个 `if parts[2] != \"ERROR\": continue`",
+      "字典的名字用 `parts[3].rstrip(\":\")`"
+     ],
+     "solution": "errors = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        if parts[2] != \"ERROR\":\n            continue\n        svc = parts[3].rstrip(\":\")\n        errors[svc] = errors.get(svc, 0) + 1\nfor svc, n in sorted(errors.items(), key=lambda kv: kv[1], reverse=True):\n    print(svc, n)"
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  },
+  {
+   "id": "b4",
+   "title": "找到故障从哪一分钟开始",
+   "body": "错误最多的服务**不一定是根源**：下游数据库坏了，上游的支付服务会跟着大量超时报错。\n要找根源，看**谁最先出事**。\n\n时间在第 2 段 `09:40:01`，取前 5 个字符 `09:40` 就是「分钟」。字符串也能切片：`\"09:40:01\"[:5]`。",
+   "example": "t = \"09:40:01\"\nprint(t[:5])\nprint(t[:2], t[3:5])",
+   "tweaks": [
+    {
+     "ask": "`t[:5]`、`t[:2]`、`t[3:5]` 分别是什么意思？",
+     "answer": "切片 `[a:b]` 取第 a 到第 b-1 个字符：`[:5]` 是前 5 个 → `09:40`；`[:2]` 是小时；`[3:5]` 是分钟。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "first = {}\nfor svc, t in [(\"db\", \"09:40\"), (\"gateway\", \"09:41\"), (\"db\", \"09:42\")]:\n    if svc not in first:\n        first[svc] = t\nprint(first)",
+     "explain": "`if svc not in first` 保证只记下**第一次**出现的时间。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "找出 `samples/demo.log` 里**每个服务第一次出现 ERROR 或 FATAL 的时间**（精确到秒，直接用第 2 段），按时间从早到晚打印：\n\n```\n09:04:21 order-svc\n09:40:00 gateway\n09:40:01 db\n09:40:01 payment-svc\n```\n\n然后去日志里看看这几行的**内容**：order-svc 那条和 09:40 的故障有关系吗？gateway 比 db 早了 1 秒，它就是根源吗？（这会是「讲」的第 3 题）",
+     "hints": [
+      "字典 `first`：服务名 → 第一次出事的时间，用 `if svc not in first:` 只记第一次",
+      "级别判断：`parts[2] in (\"ERROR\", \"FATAL\")`",
+      "按时间排：`sorted(first.items(), key=lambda kv: kv[1])`，打印 `时间 服务名`"
+     ],
+     "solution": "first = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        if parts[2] not in (\"ERROR\", \"FATAL\"):\n            continue\n        svc = parts[3].rstrip(\":\")\n        if svc not in first:\n            first[svc] = parts[1]\nfor svc, t in sorted(first.items(), key=lambda kv: kv[1]):\n    print(t, svc)"
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  }
+ ]
+}

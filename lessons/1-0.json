@@ -1,0 +1,332 @@
+{
+ "id": "1-0",
+ "stage": 1,
+ "title": "Python 快速复习",
+ "intro": "\n把忘掉的语法找回来。一共 8 小块，每块都按 **① 学 + 抄 → ② 改 → ③ 猜 → ④ 默写** 走一遍。\n每块 20–40 分钟，不用一次做完。卡住了先看出错提示，再自己试 20 分钟，然后才问 AI 要**提示**（不要答案）。\n",
+ "questions": [
+  "这 8 块里，哪块最难？卡在哪里？",
+  "ports[\"ftp\"] 和 ports.get(\"ftp\", 0)，在处理真实日志时为什么后者更安全？",
+  "函数有什么用？为什么要把 level_of 写成函数，而不是每次都写 line.split(\" \")[2]？"
+ ],
+ "blocks": [
+  {
+   "id": "b1",
+   "title": "变量和打印",
+   "body": "**变量**就是给一个值起名字，像给服务器贴标签。\n\n| 写法 | 意思 |\n|---|---|\n| `host = \"web-01\"` | 字符串（文字），要加引号 |\n| `cpu = 87.5` | 小数 |\n| `count = 3` | 整数 |\n| `print(a, b)` | 打印，多个值之间自动加空格 |\n| `f\"{host} CPU={cpu}%\"` | **f-string**：把变量填进 `{}` 里 |\n| `f\"{host:10}\"` | 占 10 格宽，用来让输出对齐 |",
+   "example": "host = \"web-01\"\ncpu = 87.5\ndisk_free_gb = 12\n\nprint(host, cpu)\nprint(f\"{host} CPU={cpu}% 磁盘剩余 {disk_free_gb}GB\")\nprint(f\"{host:10}|{cpu:6}|\")",
+   "tweaks": [
+    {
+     "ask": "把 `{host:10}` 改成 `{host:>10}`，输出会有什么变化？",
+     "answer": "`>` 表示**右对齐**：`    web-01|`。不写或写 `<` 是左对齐。做报表时数字一般右对齐，名字左对齐。"
+    },
+    {
+     "ask": "加一行 `print(\"剩余 \" + disk_free_gb + \"GB\")`，会怎样？怎么修好？",
+     "answer": "会报错 `TypeError`：字符串不能和整数直接相加。两种修法：`\"剩余 \" + str(disk_free_gb) + \"GB\"`，或者用 f-string：`f\"剩余 {disk_free_gb}GB\"`（推荐）。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "host = \"db-01\"\nprint(f\"[{host}]\")\nprint(f\"[{host:8}]\")",
+     "explain": "`:8` 让它占 8 格，`db-01` 只有 5 个字符，后面补 3 个空格。"
+    },
+    {
+     "id": "q2",
+     "code": "a = \"10\"\nb = 5\nprint(a + str(b))\nprint(int(a) + b)",
+     "explain": "`\"10\" + \"5\"` 是把文字拼起来 → `105`；`int(\"10\") + 5` 才是数学加法 → `15`。读日志时数字都是字符串，要先 `int()`。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "有一台主机 `db-01`，内存使用率 `92`，打印出：\n\n```\ndb-01 内存 92% ⚠\n```",
+     "hints": [
+      "先用两个变量存主机名和使用率",
+      "用 f-string：`f\"{变量} 内存 {变量}% ⚠\"`"
+     ],
+     "solution": "host = \"db-01\"\nmem = 92\nprint(f\"{host} 内存 {mem}% ⚠\")"
+    }
+   ]
+  },
+  {
+   "id": "b2",
+   "title": "字符串",
+   "body": "日志的每一行都是一个**字符串**。最常用的几个方法：\n\n| 方法 | 作用 | 你熟悉的 |\n|---|---|---|\n| `s.strip()` | 去掉首尾空白和换行 | |\n| `s.split(\" \")` | 按空格切成列表 | `awk '{print $3}'` |\n| `s.split(\" \", 4)` | 最多切 4 刀，后面整段保留 | |\n| `s.rstrip(\":\")` | 去掉右边的 `:` | |\n| `\"timeout\" in s` | 是否包含 | `grep timeout` |\n| `s.startswith(\"2026\")` | 是否以…开头 | `grep ^2026` |\n| `s.lower()` | 转小写 | `grep -i` |\n\n方法可以**连着用**：`s.strip().lower()`。注意：Python 从 **0** 开始数，awk 从 1 开始。",
+   "example": "line = \"  2026-11-10 09:40:01 ERROR payment-svc: connection timeout to db  \\n\"\nclean = line.strip()\nprint(clean)\nparts = clean.split(\" \")\nprint(parts)\nprint(parts[2], parts[3])\nprint(parts[3].rstrip(\":\"))\nprint(\"timeout\" in clean)",
+   "tweaks": [
+    {
+     "ask": "把 `split(\" \")` 改成 `split(\" \", 4)`，`parts` 会变成什么样？`parts[4]` 是什么？",
+     "answer": "最多切 4 刀，变成 5 段：`parts[4]` 是剩下的整段消息 `connection timeout to db`。分析日志时常这样把「前面的固定字段」和「后面的消息」分开。"
+    },
+    {
+     "ask": "不 `strip()`，直接 `line.split(\" \")`，结果有什么不同？",
+     "answer": "开头的两个空格会切出两个**空字符串** `''`，末尾还有 `'\\n'`，下标全乱了：`parts[2]` 不再是 ERROR。所以**先 strip 再 split**。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "s = \"a,b,,c\"\nprint(s.split(\",\"))\nprint(len(s.split(\",\")))",
+     "explain": "两个逗号之间是空的，会切出一个空字符串 `''`，所以一共 4 段。"
+    },
+    {
+     "id": "q2",
+     "code": "s = \"WARN order-svc: slow\"\nprint(s.split(\" \")[1].rstrip(\":\").upper())",
+     "explain": "从左往右：切开 → 取第 2 段 `order-svc:` → 去掉冒号 → 转大写。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "给你：\n\n```\ns = \"2026-11-10 09:41:07 WARN order-svc: slow query 2300ms\"\n```\n\n打印出它的**级别**和**服务名（不带冒号）**，格式：`WARN order-svc`",
+     "hints": [
+      "先 `split(\" \")`，数一数级别和服务名分别是第几段（从 0 数）",
+      "服务名后面带冒号，用 `rstrip(\":\")` 去掉"
+     ],
+     "solution": "s = \"2026-11-10 09:41:07 WARN order-svc: slow query 2300ms\"\nparts = s.split(\" \")\nprint(parts[2], parts[3].rstrip(\":\"))"
+    }
+   ]
+  },
+  {
+   "id": "b3",
+   "title": "列表",
+   "body": "**列表**是一串东西，用方括号 `[]`。比如一组主机、一组延迟。\n\n| 写法 | 意思 |\n|---|---|\n| `hosts.append(\"x\")` | 末尾加一个 |\n| `hosts[0]` / `hosts[-1]` | 第一个 / 最后一个 |\n| `hosts[1:3]` | 切片：第 1 到第 3 个（**不含** 3） |\n| `len(hosts)` | 有几个 |\n| `\"db-01\" in hosts` | 在不在里面 |\n| `sorted(x)` / `sorted(x, reverse=True)` | 从小到大 / 从大到小，**返回新列表** |\n| `max(x)` / `min(x)` / `sum(x)` | 最大 / 最小 / 求和 |",
+   "example": "hosts = [\"web-01\", \"web-02\", \"db-01\"]\nhosts.append(\"cache-01\")\nprint(hosts)\nprint(len(hosts), hosts[0], hosts[-1])\nprint(hosts[1:3])\nprint(\"db-01\" in hosts)\n\nlatencies = [120, 35, 980, 60]\nprint(sorted(latencies))\nprint(sorted(latencies, reverse=True)[0])",
+   "tweaks": [
+    {
+     "ask": "加一行 `print(hosts[4])`，会怎样？",
+     "answer": "`IndexError: list index out of range`：一共 4 个，下标只有 0–3。处理日志时，`split` 切出来的段数不够，也会报这个错。"
+    },
+    {
+     "ask": "`sorted(latencies)` 之后，再 `print(latencies)`，它本身变了吗？",
+     "answer": "没变。`sorted()` 返回一个**新**列表，原来的不动。想原地排序要用 `latencies.sort()`。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "x = [3, 1, 2]\ny = sorted(x)\nprint(x, y)",
+     "explain": "`sorted` 不改原列表。"
+    },
+    {
+     "id": "q2",
+     "code": "hosts = [\"a\", \"b\", \"c\", \"d\"]\nprint(hosts[-2:])",
+     "explain": "`-2:` 表示从倒数第 2 个一直到最后。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "有延迟列表 `[200, 15, 340, 90, 1200]`，打印**最大值、最小值、一共几个**，一行打印，用空格分开：\n\n```\n1200 15 5\n```",
+     "hints": [
+      "`max()`、`min()`、`len()` 各管一个",
+      "`print(a, b, c)` 会自动用空格分开"
+     ],
+     "solution": "lat = [200, 15, 340, 90, 1200]\nprint(max(lat), min(lat), len(lat))"
+    }
+   ]
+  },
+  {
+   "id": "b4",
+   "title": "判断 if / elif / else",
+   "body": "判断就是告警规则：**满足条件才执行**。\n\n```\nif 条件:\n    满足时做的事        ← 缩进 4 个空格\nelif 另一个条件:\n    前面不满足、这个满足时做的事\nelse:\n    都不满足时做的事\n```\n\n比较：`==` 等于、`!=` 不等于、`>` `>=` `<` `<=`。组合：`and` `or` `not`。\n**从上往下判断，第一个满足的执行完就结束**，所以顺序很重要。",
+   "example": "cpu = 85\nif cpu > 90:\n    print(\"严重\")\nelif cpu > 80:\n    print(\"警告\")\nelse:\n    print(\"正常\")\n\nlevel = \"FATAL\"\nif level == \"ERROR\" or level == \"FATAL\":\n    print(\"需要处理\")",
+   "tweaks": [
+    {
+     "ask": "把 `cpu` 改成 `90`，输出什么？改成 `91` 呢？",
+     "answer": "`90 > 90` 是 False，所以 90 是「警告」；91 是「严重」。写告警阈值时要想清楚是 `>` 还是 `>=`。"
+    },
+    {
+     "ask": "把两个判断的顺序对调（先判断 `> 80`），`cpu = 95` 时输出什么？",
+     "answer": "输出「警告」：95 先满足了 `> 80`，后面的 `> 90` 根本不会被检查。**范围大的条件要放后面**。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "x = 80\nif x >= 80:\n    print(\"A\")\nif x > 70:\n    print(\"B\")",
+     "explain": "两个都是独立的 `if`，不是 `elif`，所以两个都会检查，都满足就都打印。"
+    },
+    {
+     "id": "q2",
+     "code": "level = \"warn\"\nif level == \"WARN\":\n    print(\"告警\")\nelse:\n    print(\"其他\")",
+     "explain": "大小写不一样，`==` 认为不相等。可以先 `level.upper()` 再比较。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "有一个列表 `[5, 15, 50]`，代表三块磁盘的剩余百分比。对每个数：小于 10 打印 `严重`，小于 20 打印 `警告`，否则打印 `正常`。\n\n应该输出三行：严重、警告、正常。",
+     "hints": [
+      "用 `for free in [5, 15, 50]:` 依次拿出每个数",
+      "先判断 `< 10`，再判断 `< 20`（顺序很重要）"
+     ],
+     "solution": "for free in [5, 15, 50]:\n    if free < 10:\n        print(\"严重\")\n    elif free < 20:\n        print(\"警告\")\n    else:\n        print(\"正常\")"
+    }
+   ]
+  },
+  {
+   "id": "b5",
+   "title": "循环 for",
+   "body": "`for` 把一串东西**一个一个拿出来**处理，像对每台服务器执行同一个检查。\n\n| 写法 | 意思 |\n|---|---|\n| `for h in hosts:` | 依次拿出列表里的每一个 |\n| `for i in range(3):` | 0, 1, 2 |\n| `for i in range(1, 4):` | 1, 2, 3（不含 4） |\n| `continue` | 跳过这一个，进入下一轮 |\n| `break` | 整个循环结束 |\n\n计数的套路：循环前 `n = 0`，满足条件时 `n = n + 1`。",
+   "example": "hosts = [\"web-01\", \"web-02\", \"db-01\", \"cache-01\"]\nfor h in hosts:\n    print(\"检查\", h)\n\nfor i in range(3):\n    print(\"第\", i, \"次重试\")\n\nfor h in hosts:\n    if h.startswith(\"web\"):\n        continue\n    if h == \"cache-01\":\n        break\n    print(\"非 web 主机：\", h)",
+   "tweaks": [
+    {
+     "ask": "把 `range(3)` 改成 `range(1, 4)`，输出什么？",
+     "answer": "打印第 1、2、3 次。`range(a, b)` 从 a 开始，到 b **之前**停。"
+    },
+    {
+     "ask": "把最后一段里的 `continue` 和 `break` 互换，会输出什么？",
+     "answer": "什么都不打印：第一台 `web-01` 一进来就 `break`，循环直接结束了。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "n = 0\nfor x in [3, 8, 1, 9]:\n    if x > 5:\n        n = n + 1\nprint(n)",
+     "explain": "大于 5 的有 8 和 9，两个。"
+    },
+    {
+     "id": "q2",
+     "code": "for i in range(5):\n    if i == 3:\n        break\n    print(i)",
+     "explain": "到 3 就 break，所以只打印 0 1 2。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "有延迟列表 `[120, 35, 980, 60, 1500, 40]`，用 `for` 把**超过 500** 的一个一个打印出来，最后再打印 `一共 N 个`：\n\n```\n980\n1500\n一共 2 个\n```",
+     "hints": [
+      "循环前先 `n = 0`",
+      "在 `if x > 500:` 里面打印并让 `n` 加 1",
+      "最后一行在循环外面（不缩进），用 f-string"
+     ],
+     "solution": "n = 0\nfor x in [120, 35, 980, 60, 1500, 40]:\n    if x > 500:\n        print(x)\n        n = n + 1\nprint(f\"一共 {n} 个\")"
+    }
+   ]
+  },
+  {
+   "id": "b6",
+   "title": "字典",
+   "body": "**字典**是一张「名字 → 值」的对照表，用花括号 `{}`。运维里到处都是：端口表、每个服务的错误数。\n\n| 写法 | 意思 |\n|---|---|\n| `ports[\"ssh\"]` | 取值（**没有这个名字会报错**） |\n| `ports.get(\"ftp\", 0)` | 取值，没有就返回 0，**不报错** |\n| `ports[\"https\"] = 443` | 新增或修改 |\n| `\"ssh\" in ports` | 有没有这个名字 |\n| `for k, v in ports.items():` | 一对一对拿出来 |\n\n**计数的固定写法**（今天最重要的一行）：\n\n```\ncounts[x] = counts.get(x, 0) + 1\n```\n\n这就是 `sort | uniq -c` 的核心。",
+   "example": "ports = {\"ssh\": 22, \"http\": 80}\nports[\"https\"] = 443\nprint(ports)\nprint(ports[\"ssh\"], ports.get(\"ftp\", 0))\nfor name, port in ports.items():\n    print(f\"{name:6} {port}\")\n\nlevels = [\"INFO\", \"ERROR\", \"INFO\", \"WARN\", \"ERROR\", \"INFO\"]\ncounts = {}\nfor lv in levels:\n    counts[lv] = counts.get(lv, 0) + 1\nprint(counts)",
+   "tweaks": [
+    {
+     "ask": "加一行 `print(ports[\"ftp\"])`，会怎样？和 `ports.get(\"ftp\", 0)` 有什么区别？",
+     "answer": "`KeyError: 'ftp'`，程序直接停了。`.get` 找不到时返回默认值，程序继续跑。处理日志时会遇到各种没见过的名字，用 `.get` 更安全。"
+    },
+    {
+     "ask": "把 `counts.get(lv, 0) + 1` 改成 `counts[lv] + 1`，会怎样？",
+     "answer": "第一次遇到 `INFO` 时字典里还没有它，`counts[\"INFO\"]` 直接 `KeyError`。`.get(lv, 0)` 的意思就是「没有就当 0」。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "d = {\"a\": 1}\nd[\"a\"] = d[\"a\"] + 5\nd[\"b\"] = 2\nprint(d)",
+     "explain": "已有的名字是修改，没有的名字是新增。"
+    },
+    {
+     "id": "q2",
+     "code": "d = {\"web\": 3, \"db\": 7, \"cache\": 1}\nfor k, v in sorted(d.items(), key=lambda kv: kv[1], reverse=True):\n    print(k, v)",
+     "explain": "`sorted(d.items(), key=lambda kv: kv[1], reverse=True)`：按「值」从大到小排。这一行先当固定写法记住。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "有服务列表 `[\"gateway\", \"db\", \"gateway\", \"payment\", \"gateway\", \"db\"]`，统计每个服务出现几次，**从多到少**打印，每行 `服务名 次数`：\n\n```\ngateway 3\ndb 2\npayment 1\n```",
+     "hints": [
+      "计数用 `counts[x] = counts.get(x, 0) + 1`",
+      "排序用 `sorted(counts.items(), key=lambda kv: kv[1], reverse=True)`",
+      "排序后 `for name, n in ...:` 打印"
+     ],
+     "solution": "services = [\"gateway\", \"db\", \"gateway\", \"payment\", \"gateway\", \"db\"]\ncounts = {}\nfor s in services:\n    counts[s] = counts.get(s, 0) + 1\nfor name, n in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):\n    print(name, n)"
+    }
+   ]
+  },
+  {
+   "id": "b7",
+   "title": "函数",
+   "body": "**函数**就是把一段操作起个名字，以后一句话就能调用。就像把一串排查命令写成一个脚本。\n\n```\ndef 名字(参数):\n    做事情\n    return 结果          ← 把结果交回去\n```\n\n- 没写 `return` 的函数，返回 `None`（什么都没有）。\n- 好处：**写一次，到处用**；以后要改，也只改一个地方；还能单独测试。",
+   "example": "def level_of(line):\n    parts = line.split(\" \")\n    return parts[2]\n\ndef is_bad(level):\n    return level in (\"ERROR\", \"FATAL\")\n\nlines = [\n    \"2026-11-10 09:00:00 INFO gateway: ok\",\n    \"2026-11-10 09:40:01 FATAL db: too many connections\",\n    \"2026-11-10 09:40:01 ERROR payment-svc: timeout\",\n]\nfor l in lines:\n    lv = level_of(l)\n    print(lv, is_bad(lv))",
+   "tweaks": [
+    {
+     "ask": "把 `return parts[2]` 改成 `print(parts[2])`，输出会变成什么？为什么出现了 `None`？",
+     "answer": "函数里自己打印了一次级别；但没有 `return`，所以 `lv` 拿到的是 `None`，`is_bad(None)` 是 False，于是打印出 `None False`。**打印不等于返回**。"
+    },
+    {
+     "ask": "调用 `level_of(\"garbage\")` 会怎样？怎么改，让它遇到这种行返回 `\"UNKNOWN\"`？",
+     "answer": "`\"garbage\".split(\" \")` 只有 1 段，`parts[2]` 会 `IndexError`。可以先检查：`if len(parts) < 3: return \"UNKNOWN\"`。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "def add(a, b):\n    print(a + b)\n\nx = add(1, 2)\nprint(x)",
+     "explain": "函数里打印了 3，但没有 return，所以 x 是 None。"
+    },
+    {
+     "id": "q2",
+     "code": "def double(n):\n    return n * 2\n\nprint(double(double(3)))",
+     "explain": "先算里面：double(3) = 6，再 double(6) = 12。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "写一个函数 `service_of(line)`，返回服务名（不带冒号）。用下面 3 行测试，依次打印：\n\n```\ngateway\ndb\npayment-svc\n```\n\n```\nlines = [\n    \"2026-11-10 09:00:00 INFO gateway: ok\",\n    \"2026-11-10 09:40:01 FATAL db: too many connections\",\n    \"2026-11-10 09:40:01 ERROR payment-svc: timeout\",\n]\n```",
+     "hints": [
+      "`def service_of(line):` 里面先 split",
+      "服务名是第 4 段（下标 3），记得 `rstrip(\":\")`，然后 `return`",
+      "最后 `for l in lines: print(service_of(l))`"
+     ],
+     "solution": "def service_of(line):\n    return line.split(\" \")[3].rstrip(\":\")\n\nlines = [\n    \"2026-11-10 09:00:00 INFO gateway: ok\",\n    \"2026-11-10 09:40:01 FATAL db: too many connections\",\n    \"2026-11-10 09:40:01 ERROR payment-svc: timeout\",\n]\nfor l in lines:\n    print(service_of(l))"
+    }
+   ]
+  },
+  {
+   "id": "b8",
+   "title": "读写文件",
+   "body": "真实的日志在文件里。`samples/demo.log` 是一份模拟的线上日志，大约 4 千行，中间藏着一次故障。\n\n```\nwith open(\"文件名\", encoding=\"utf-8\") as f:   ← 打开，代码块结束后自动关闭\n    for line in f:                               ← 一次读一行，10GB 也不怕\n        ...\n```\n\n写文件：`open(\"文件名\", \"w\", encoding=\"utf-8\")`，`\"w\"` 是覆盖，`\"a\"` 是追加。换行要自己写 `\\n`。",
+   "example": "n = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        n = n + 1\n        if n <= 3:\n            print(line.strip())\nprint(\"一共\", n, \"行\")",
+   "tweaks": [
+    {
+     "ask": "把 `print(line.strip())` 改成 `print(line)`，输出有什么不同？",
+     "answer": "每行之间多了一个空行：每一行末尾本来就带着换行符 `\\n`，`print` 又加了一个。"
+    },
+    {
+     "ask": "把文件名故意写错成 `samples/demo2.log`，看懂报错。",
+     "answer": "`FileNotFoundError`：找不到文件。看到它先检查路径和文件名。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "with open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    first = f.readline()\nprint(first.split(\" \")[2])",
+     "explain": "`readline()` 只读一行。第一行是一条 INFO。"
+    },
+    {
+     "id": "q2",
+     "code": "n = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        if \" FATAL \" in line:\n            n = n + 1\nprint(n)",
+     "explain": "用 `in` 数包含 FATAL 的行，相当于 `grep -c \" FATAL \"`。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "读 `samples/demo.log`，数出**包含 `timeout` 的行**有多少，打印这个数字。\n\n（可以想一想：用命令行的话是 `grep -c timeout samples/demo.log`）",
+     "hints": [
+      "`with open(...) as f:` 再 `for line in f:`",
+      "`if \"timeout\" in line:` 就加 1",
+      "最后在循环外 `print(n)`"
+     ],
+     "solution": "n = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        if \"timeout\" in line:\n            n = n + 1\nprint(n)"
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  }
+ ]
+}
