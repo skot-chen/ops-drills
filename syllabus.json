@@ -1,55 +1,231 @@
 [
-  { "stage": 1, "title": "地基：Python / Git / Docker", "goal": "能用 Python 读日志、写小工具，会用 Git 管代码，会用 Docker 打包。",
-    "lessons": [
-      { "id": "1-0", "title": "Python 快速复习" },
-      { "id": "1-1", "title": "用 Python 统计日志" },
-      { "id": "1-2", "title": "正则表达式：从日志里抽字段" },
-      { "id": "1-3", "title": "函数和测试：让脚本可以放心改" },
-      { "id": "1-4", "title": "Git：提交、推送、看历史、回退" },
-      { "id": "1-5", "title": "HTTP 和 JSON：用 Python 调接口" },
-      { "id": "1-6", "title": "Docker：把脚本装进容器" }
-    ] },
-  { "stage": 2, "title": "可观测性：指标、日志、告警", "goal": "知道监控数据从哪来、长什么样，会写 PromQL 和告警规则。",
-    "lessons": [
-      { "id": "2-1", "title": "指标、日志、链路：各自回答什么问题" },
-      { "id": "2-2", "title": "Prometheus：采集和存储" },
-      { "id": "2-3", "title": "PromQL：请求量、错误率、P95 延迟" },
-      { "id": "2-4", "title": "Grafana 看板和告警规则" },
-      { "id": "2-5", "title": "Loki：指标和日志对着看" }
-    ] },
-  { "stage": 3, "title": "Kubernetes：服务跑在哪", "goal": "能部署一个服务，把它弄坏再用 kubectl 找到原因。",
-    "lessons": [
-      { "id": "3-1", "title": "本机起一个集群，kubectl 基本命令" },
-      { "id": "3-2", "title": "Pod、Deployment、ReplicaSet" },
-      { "id": "3-3", "title": "Service、Ingress、ConfigMap、Secret" },
-      { "id": "3-4", "title": "探针、资源限制、滚动发布和回滚" },
-      { "id": "3-5", "title": "排障三板斧：describe / logs / events" },
-      { "id": "3-6", "title": "用 Helm 装 Prometheus" }
-    ] },
-  { "stage": 4, "title": "数据方法：让程序判断「不正常」", "goal": "会做异常检测和告警合并，能讲清楚误报和漏报怎么取舍。",
-    "lessons": [
-      { "id": "4-1", "title": "统计基础：平均值、中位数、分位数" },
-      { "id": "4-2", "title": "异常检测：阈值、3-sigma、中位数/MAD、同比" },
-      { "id": "4-3", "title": "日志模板化" },
-      { "id": "4-4", "title": "告警降噪：按时间、服务、指纹合并" },
-      { "id": "4-5", "title": "怎么评价：误报、漏报、准确率、召回率" }
-    ] },
-  { "stage": 5, "title": "大模型：让 AI 帮你查问题", "goal": "会调大模型 API、写提示词，做一个带知识库和工具的小助手。",
-    "lessons": [
-      { "id": "5-1", "title": "大模型是什么，用 Python 调 API" },
-      { "id": "5-2", "title": "提示词：问得准，让它输出 JSON" },
-      { "id": "5-3", "title": "RAG：先查知识库再回答" },
-      { "id": "5-4", "title": "Agent：让大模型自己选工具" },
-      { "id": "5-5", "title": "怎么判断 AI 答得对，怎么防止瞎编" },
-      { "id": "5-6", "title": "扣子 / Dify：低代码怎么做同样的事" }
-    ] },
-  { "stage": 6, "title": "综合项目：AI 值班助手", "goal": "告警来了，助手几分钟内说出哪里坏了、证据是什么。",
-    "lessons": [
-      { "id": "6-1", "title": "设计：从告警到建议的完整流程" },
-      { "id": "6-2", "title": "接收告警并合并成事件" },
-      { "id": "6-3", "title": "自动收集证据：指标、日志、K8s 事件" },
-      { "id": "6-4", "title": "大模型根因分析：结论必须带证据" },
-      { "id": "6-5", "title": "推送到飞书" },
-      { "id": "6-6", "title": "故障演练：10 种故障的成绩单" }
-    ] }
+ {
+  "stage": 1,
+  "title": "地基：Python / Git / Docker",
+  "goal": "能用 Python 读日志、写小工具，会用 Git 管代码，会用 Docker 打包。",
+  "lessons": [
+   {
+    "id": "1-0",
+    "title": "Python 快速复习",
+    "title_en": "Python quick review"
+   },
+   {
+    "id": "1-1",
+    "title": "用 Python 统计日志",
+    "title_en": "Counting logs with Python"
+   },
+   {
+    "id": "1-2",
+    "title": "正则表达式：从日志里抽字段",
+    "title_en": "Regular expressions: pulling fields out of logs"
+   },
+   {
+    "id": "1-3",
+    "title": "函数和测试：让脚本可以放心改",
+    "title_en": "Functions and tests: change scripts with confidence"
+   },
+   {
+    "id": "1-4",
+    "title": "Git：提交、推送、看历史、回退",
+    "title_en": "Git: commit, push, history, undo"
+   },
+   {
+    "id": "1-5",
+    "title": "HTTP 和 JSON：用 Python 调接口",
+    "title_en": "HTTP and JSON: calling APIs from Python"
+   },
+   {
+    "id": "1-6",
+    "title": "Docker：把脚本装进容器",
+    "title_en": "Docker: putting a script in a container"
+   }
+  ],
+  "title_en": "Foundations: Python / Git / Docker",
+  "goal_en": "Use Python to read logs and write small tools, manage code with Git, and package it with Docker."
+ },
+ {
+  "stage": 2,
+  "title": "可观测性：指标、日志、告警",
+  "goal": "知道监控数据从哪来、长什么样，会写 PromQL 和告警规则。",
+  "lessons": [
+   {
+    "id": "2-1",
+    "title": "指标、日志、链路：各自回答什么问题",
+    "title_en": "Metrics, logs, traces: what each one answers"
+   },
+   {
+    "id": "2-2",
+    "title": "Prometheus：采集和存储",
+    "title_en": "Prometheus: collecting and storing"
+   },
+   {
+    "id": "2-3",
+    "title": "PromQL：请求量、错误率、P95 延迟",
+    "title_en": "PromQL: request rate, error rate, P95 latency"
+   },
+   {
+    "id": "2-4",
+    "title": "Grafana 看板和告警规则",
+    "title_en": "Grafana dashboards and alert rules"
+   },
+   {
+    "id": "2-5",
+    "title": "Loki：指标和日志对着看",
+    "title_en": "Loki: metrics and logs side by side"
+   }
+  ],
+  "title_en": "Observability: metrics, logs, alerts",
+  "goal_en": "Know where monitoring data comes from and what it looks like; write PromQL and alert rules."
+ },
+ {
+  "stage": 3,
+  "title": "Kubernetes：服务跑在哪",
+  "goal": "能部署一个服务，把它弄坏再用 kubectl 找到原因。",
+  "lessons": [
+   {
+    "id": "3-1",
+    "title": "本机起一个集群，kubectl 基本命令",
+    "title_en": "A local cluster and basic kubectl"
+   },
+   {
+    "id": "3-2",
+    "title": "Pod、Deployment、ReplicaSet",
+    "title_en": "Pods, Deployments, ReplicaSets"
+   },
+   {
+    "id": "3-3",
+    "title": "Service、Ingress、ConfigMap、Secret",
+    "title_en": "Services, Ingress, ConfigMaps, Secrets"
+   },
+   {
+    "id": "3-4",
+    "title": "探针、资源限制、滚动发布和回滚",
+    "title_en": "Probes, resource limits, rolling updates and rollback"
+   },
+   {
+    "id": "3-5",
+    "title": "排障三板斧：describe / logs / events",
+    "title_en": "Troubleshooting: describe / logs / events"
+   },
+   {
+    "id": "3-6",
+    "title": "用 Helm 装 Prometheus",
+    "title_en": "Installing Prometheus with Helm"
+   }
+  ],
+  "title_en": "Kubernetes: where services run",
+  "goal_en": "Deploy a service, break it, and find the cause with kubectl."
+ },
+ {
+  "stage": 4,
+  "title": "数据方法：让程序判断「不正常」",
+  "goal": "会做异常检测和告警合并，能讲清楚误报和漏报怎么取舍。",
+  "lessons": [
+   {
+    "id": "4-1",
+    "title": "统计基础：平均值、中位数、分位数",
+    "title_en": "Statistics basics: mean, median, percentiles"
+   },
+   {
+    "id": "4-2",
+    "title": "异常检测：阈值、3-sigma、中位数/MAD、同比",
+    "title_en": "Anomaly detection: thresholds, 3-sigma, median/MAD, seasonality"
+   },
+   {
+    "id": "4-3",
+    "title": "日志模板化",
+    "title_en": "Log templates"
+   },
+   {
+    "id": "4-4",
+    "title": "告警降噪：按时间、服务、指纹合并",
+    "title_en": "Alert noise reduction: grouping by time, service, fingerprint"
+   },
+   {
+    "id": "4-5",
+    "title": "怎么评价：误报、漏报、准确率、召回率",
+    "title_en": "Measuring quality: false alarms, misses, precision, recall"
+   }
+  ],
+  "title_en": "Data methods: let a program spot \"not normal\"",
+  "goal_en": "Build anomaly detection and alert grouping; explain the trade-off between false alarms and missed alarms."
+ },
+ {
+  "stage": 5,
+  "title": "大模型：让 AI 帮你查问题",
+  "goal": "会调大模型 API、写提示词，做一个带知识库和工具的小助手。",
+  "lessons": [
+   {
+    "id": "5-1",
+    "title": "大模型是什么，用 Python 调 API",
+    "title_en": "What LLMs are; calling the API from Python"
+   },
+   {
+    "id": "5-2",
+    "title": "提示词：问得准，让它输出 JSON",
+    "title_en": "Prompts: precise questions and JSON output"
+   },
+   {
+    "id": "5-3",
+    "title": "RAG：先查知识库再回答",
+    "title_en": "RAG: search a knowledge base, then answer"
+   },
+   {
+    "id": "5-4",
+    "title": "Agent：让大模型自己选工具",
+    "title_en": "Agents: letting the model choose tools"
+   },
+   {
+    "id": "5-5",
+    "title": "怎么判断 AI 答得对，怎么防止瞎编",
+    "title_en": "Checking AI answers and preventing made-up ones"
+   },
+   {
+    "id": "5-6",
+    "title": "扣子 / Dify：低代码怎么做同样的事",
+    "title_en": "Coze / Dify: the same thing with low-code tools"
+   }
+  ],
+  "title_en": "Large language models: let AI help investigate",
+  "goal_en": "Call an LLM API, write prompts, and build a small assistant with a knowledge base and tools."
+ },
+ {
+  "stage": 6,
+  "title": "综合项目：AI 值班助手",
+  "goal": "告警来了，助手几分钟内说出哪里坏了、证据是什么。",
+  "lessons": [
+   {
+    "id": "6-1",
+    "title": "设计：从告警到建议的完整流程",
+    "title_en": "Design: the full path from alert to advice"
+   },
+   {
+    "id": "6-2",
+    "title": "接收告警并合并成事件",
+    "title_en": "Receiving alerts and grouping them into incidents"
+   },
+   {
+    "id": "6-3",
+    "title": "自动收集证据：指标、日志、K8s 事件",
+    "title_en": "Collecting evidence: metrics, logs, K8s events"
+   },
+   {
+    "id": "6-4",
+    "title": "大模型根因分析：结论必须带证据",
+    "title_en": "LLM root-cause analysis: every conclusion needs evidence"
+   },
+   {
+    "id": "6-5",
+    "title": "推送到飞书",
+    "title_en": "Sending to Feishu"
+   },
+   {
+    "id": "6-6",
+    "title": "故障演练：10 种故障的成绩单",
+    "title_en": "Fault drills: a scorecard for 10 failures"
+   }
+  ],
+  "title_en": "Final project: an AI on-call assistant",
+  "goal_en": "When an alert fires, the assistant says within minutes what broke and shows the evidence."
+ }
 ]

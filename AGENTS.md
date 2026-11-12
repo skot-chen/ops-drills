@@ -46,6 +46,13 @@ Each lesson = 3–8 small **blocks**, one idea each. The site walks every block 
   thread you haven't opened. `note` says which block it matches (e.g. 「对应 b2」) or when to watch it.
 - `questions` (讲): exactly 3, answered in the learner's own words: one *why*, one about a real-world ops situation, one reflection. Never refer to the learner's own past jobs or background.
 
+## English subtitles (required for new lessons)
+The site has an **EN** switch that shows an English version under the Chinese (so the learner can explain to English speakers).
+Every Chinese text field has an optional `_en` twin: lesson `title_en`, `intro_en`, `questions_en` (same length);
+block `title_en`, `body_en`; tweak `ask_en`, `answer_en`; quiz `explain_en`; drill `task_en` (include the same expected-output
+code block), `hints_en` (same length); `syllabus.json` stage `title_en`, `goal_en`, lesson `title_en`. Natural, simple English;
+keep code, identifiers and outputs unchanged.
+
 ## File format
 ```json
 {

@@ -74,7 +74,7 @@ for (const f of files) {
     if (!str(b.body)) errors.push(`${at}: "body" is required`);
     const lang = b.lang || "python";
     const gid = `${L.id}.${b.id}`;
-    const out = { id: gid, title: b.title, body: b.body, lang, example: b.example || "", exampleOut: "", files: b.files || [],
+    const out = { id: gid, title: b.title, title_en: b.title_en || "", body: b.body, body_en: b.body_en || "", lang, example: b.example || "", exampleOut: "", files: b.files || [],
       tweaks: [], quiz: [], drills: [] };
     for (const p of out.files) if (!fs.existsSync(path.join(filesDir, p))) errors.push(`${at}: data file files/${p} not found`);
 
@@ -85,7 +85,7 @@ for (const f of files) {
     }
     for (const [ti, t] of (b.tweaks || []).entries()) {
       if (!str(t.ask)) errors.push(`${at} tweaks[${ti}]: "ask" is required`);
-      out.tweaks.push({ ask: t.ask || "", answer: t.answer || "" });
+      out.tweaks.push({ ask: t.ask || "", answer: t.answer || "", ask_en: t.ask_en || "", answer_en: t.answer_en || "" });
     }
     const itemIds = new Set();
     for (const [qi, q] of (b.quiz || []).entries()) {
@@ -103,7 +103,7 @@ for (const f of files) {
           errors.push(`${a}: "answer" does not match what Python prints.\n  answer: ${JSON.stringify(answer)}\n  actual: ${JSON.stringify(actual)}`);
         answer = actual;
       } else if (!str(answer)) errors.push(`${a}: "answer" is required for ${lang}`);
-      out.quiz.push({ id: `${gid}.${q.id}`, code: q.code, answer: norm(answer), explain: q.explain || "", error: raises });
+      out.quiz.push({ id: `${gid}.${q.id}`, code: q.code, answer: norm(answer), explain: q.explain || "", explain_en: q.explain_en || "", error: raises });
     }
     for (const [di, d] of (b.drills || []).entries()) {
       const a = `${at} drills[${di}]`;
@@ -118,14 +118,17 @@ for (const f of files) {
       if (!r.out.trim()) errors.push(`${a}: solution prints nothing – the checker compares printed output`);
       if (d.expect != null && norm(d.expect) !== norm(r.out))
         errors.push(`${a}: "expect" does not match the solution's output.\n  expect: ${JSON.stringify(d.expect)}\n  actual: ${JSON.stringify(r.out)}`);
-      out.drills.push({ id: `${gid}.${d.id}`, task: d.task, hints: d.hints || [], solution: d.solution, starter: d.starter || "",
+      if (d.hints_en && (d.hints_en.length !== (d.hints || []).length)) errors.push(`${a}: "hints_en" must have the same number of items as "hints"`);
+      out.drills.push({ id: `${gid}.${d.id}`, task: d.task, task_en: d.task_en || "", hints: d.hints || [], hints_en: d.hints_en || [], solution: d.solution, starter: d.starter || "",
         expect: norm(r.out), files: dfiles });
     }
     if (!out.quiz.length && !out.drills.length) warnings.push(`${at}: no quiz and no drills – nothing to review later`);
     return out;
   });
   const resources = checkResources(L.resources, at0);
-  lessons.push({ id: L.id, stage: L.stage, title: L.title, intro: L.intro || "", blocks, questions: L.questions || [], resources });
+  if (L.questions_en && L.questions_en.length !== (L.questions || []).length) errors.push(`${at0}: "questions_en" must match "questions"`);
+  lessons.push({ id: L.id, stage: L.stage, title: L.title, title_en: L.title_en || "", intro: L.intro || "", intro_en: L.intro_en || "",
+    blocks, questions: L.questions || [], questions_en: L.questions_en || [], resources });
 }
 if (!lessons.length && !errors.length) errors.push("lessons/: no lesson files found");
 

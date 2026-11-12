@@ -103,3 +103,4 @@ with real Python (cwd = `files/`), stores their outputs, and fails on errors or 
 - Course map (`syllabus.json`): all 6 stages and planned lessons; unpublished ones show 「制作中」.
 - `resources` per lesson: verified YouTube videos + GitHub/Reddit/doc links.
 - New storage keys: `xp`, `log` (per-day activity), `said`, `doneAt`, `goal`. Old progress is back-filled on load.
+- **EN switch** (top bar, remembered as `od.en`): English subtitles under all lesson text, questions, hints, step names, buttons and headings; hidden by default. Lessons carry `_en` twins of every text field (see AGENTS.md); syllabus has `title_en`/`goal_en`.

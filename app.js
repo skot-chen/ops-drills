@@ -6,6 +6,13 @@ import { grade, sameOutput, normOut, explainError, md, esc, dueQueue, blockSteps
 const $app = document.getElementById("app");
 const STEP_NAMES = ["学 + 抄", "改", "猜", "默写"];
 const STEP_KEYS = ["learn", "tweak", "guess", "drill"];
+const STEP_NAMES_EN = ["Learn + copy", "Tweak", "Guess", "From memory"];
+const STEP_TIPS_EN = [
+  "Read the explanation, then type the example yourself (no pasting) and run it. It passes when the output matches.",
+  "Change one thing. Write down your guess first, then run it to check.",
+  "Read the code and guess the output. Write your guess and the site checks it; if it's unclear, copy it to the AI.",
+  "Only a one-line task: write the code from scratch. The site checks it automatically.",
+];
 const STEP_TIPS = [
   "读讲解，然后把例子自己敲一遍（不要粘贴），运行，输出对上就过关。",
   "按提示改一处。先在「我猜」里写下你猜的结果，再运行验证。",
@@ -14,8 +21,8 @@ const STEP_TIPS = [
 ];
 
 /* ---------------- storage ---------------- */
-const KEYS = ["srs", "copied", "tweaked", "star", "draft", "answers", "days", "last", "xp", "log", "said", "doneAt", "goal"];
-const DEFAULTS = { last: null, goal: 2 };
+const KEYS = ["srs", "copied", "tweaked", "star", "draft", "answers", "days", "last", "xp", "log", "said", "doneAt", "goal", "en"];
+const DEFAULTS = { last: null, goal: 2, en: false };
 const store = {
   get(k, d) { try { const v = localStorage.getItem("od." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem("od." + k, JSON.stringify(v)); } catch { /* private mode: keep in memory only */ } },
@@ -121,6 +128,17 @@ const runner = {
   },
 };
 
+/* ---------------- English subtitles (hidden until the EN switch is on) ---------------- */
+/** zh is already HTML; en is plain text shown as a small inline subtitle. */
+const tx = (zh, en) => (en ? `${zh}<span class="en-i">${esc(en)}</span>` : zh);
+/** Block-level English version of a markdown text. */
+const enMd = (text) => (text ? `<div class="en">${md(text)}</div>` : "");
+function applyEn() {
+  document.body.classList.toggle("en-on", !!S.en);
+  const b = document.getElementById("en-toggle");
+  if (b) { b.classList.toggle("on", !!S.en); b.setAttribute("aria-pressed", S.en ? "true" : "false"); b.title = S.en ? "隐藏英文字幕 Hide English" : "显示英文字幕 Show English"; }
+}
+
 /* ---------------- small UI helpers ---------------- */
 const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 function toast(msg, ms = 2200) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), ms); }
@@ -136,13 +154,13 @@ async function copyText(text, holder, okMsg = "已复制，粘贴给 AI 就行")
 }
 const fence = (s) => "```\n" + String(s || "").replace(/\n+$/, "") + "\n```";
 function aiBtn(label, makeText, holder) {
-  const b = h(`<button class="ai">📋 ${label}</button>`);
+  const b = h(`<button class="ai">📋 ${tx(label, "Copy for AI")}</button>`);
   b.onclick = () => copyText(makeText(), holder || b.parentElement);
   return b;
 }
 /** Top bar with an obvious way back. */
-function backBar(href, label, right = "") {
-  return h(`<div class="backbar"><a class="back" href="${href}">← ${esc(label)}</a><span class="spacer"></span>${right}</div>`);
+function backBar(href, label, right = "", labelEn = "") {
+  return h(`<div class="backbar"><a class="back" href="${href}">← ${tx(esc(label), labelEn)}</a><span class="spacer"></span>${right}</div>`);
 }
 const bar = (pct, cls = "") => `<div class="bar ${cls}"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>`;
 
@@ -187,6 +205,7 @@ function showResult(box, res, want) {
 
 /* ---------------- today: the daily loop ---------------- */
 const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
+const HOW_EN = "Each block has 4 steps:\n\n**① Learn + copy**: read the explanation and **type the example yourself**, then run it until the output matches.\n**② Tweak**: change one thing, **guess the result first**, then run it.\n**③ Guess**: read code and guess its output; the site checks your guess. If it is unclear, tap 「Copy for AI」.\n**④ From memory**: only a one-line task; write the code from an empty editor. The site checks it.\n\nGuess cards and drills come back in 「Review」 after 1, 2, 4, 7, 15 and 30 days; wrong ones come back the same day.\n\n**XP**: copy +10, tweak +5, guess +3 (+2 if right), drill right +15, each review +5, finish a block +20, explain a lesson +30, check in +30.";
 function weekStrip() {
   const d0 = today();
   let html = "";
@@ -206,13 +225,13 @@ function badges() {
   const right = Object.values(S.log).reduce((n, l) => n + (l.quizRight || 0), 0);
   const fullDays = Object.values(S.log).filter((l) => l.checkin).length;
   return [
-    ["🐣", "第一步", "第一次抄对一个例子", Object.keys(S.copied).length > 0],
-    ["🔥", "三天不断", "连续学习 3 天", st >= 3],
-    ["🏅", "一周不断", "连续学习 7 天", st >= 7],
-    ["📘", "学完一课", "完成一整课", DATA.lessons.some(lessonDone)],
-    ["✍️", "默写十题", "默写写对 10 题", drillsOk >= 10],
-    ["🎯", "神猜手", "猜对 20 次", right >= 20],
-    ["✅", "五天打卡", "完整打卡 5 天", fullDays >= 5],
+    ["🐣", "第一步", "第一次抄对一个例子", Object.keys(S.copied).length > 0, "First step"],
+    ["🔥", "三天不断", "连续学习 3 天", st >= 3, "3-day streak"],
+    ["🏅", "一周不断", "连续学习 7 天", st >= 7, "7-day streak"],
+    ["📘", "学完一课", "完成一整课", DATA.lessons.some(lessonDone), "First lesson"],
+    ["✍️", "默写十题", "默写写对 10 题", drillsOk >= 10, "10 drills"],
+    ["🎯", "神猜手", "猜对 20 次", right >= 20, "Sharp guesser"],
+    ["✅", "五天打卡", "完整打卡 5 天", fullDays >= 5, "5 full days"],
   ];
 }
 
@@ -232,31 +251,31 @@ function viewHome() {
   const st = streak(Object.keys(S.days), d);
   const [y, m, dd] = d.split("-").map(Number);
   const steps = [
-    { ok: reviewDone, t: "📅 复习", sub: reviewDone ? "没有到期的了" : `还有 ${due} 项到期`, a: reviewDone ? "" : `<a class="btn primary" href="#/review">开始复习</a>` },
-    { ok: learnDone, t: "📖 学新内容", sub: !nx ? "现有的课都学完了" : `今天 ${learnedToday}/${goal} 块 · 下一块：${esc(nx.L.id)}「${esc(nx.b.title)}」第 ${nx.step} 步`,
-      a: nx ? `<a class="btn ${reviewDone && !learnDone ? "primary" : ""}" href="${blockHref(nx.L, nx.b, nx.step)}">${learnDone ? "再学一块" : "继续学"}</a>` : "" },
-    { ok: sayDone, t: "🗣️ 讲", sub: sayDone ? "学完一整课后，用自己的话讲 3 个问题" : `${say[0].id}「${esc(say[0].title)}」学完了，讲一讲`,
-      a: sayDone ? "" : `<a class="btn" href="#/l/${say[0].id}#say">去讲</a>` },
-    { ok: log.checkin, t: "✅ 打卡", sub: log.checkin ? "今天完成了！" : canCheckin ? "可以打卡了：看看今天学了什么" : "先完成复习和学新内容", a: "" },
+    { ok: reviewDone, t: tx("📅 复习", "Review"), sub: reviewDone ? "没有到期的了" : `还有 ${due} 项到期`, a: reviewDone ? "" : `<a class="btn primary" href="#/review">${tx("开始复习", "Start review")}</a>` },
+    { ok: learnDone, t: tx("📖 学新内容", "Learn something new"), sub: !nx ? "现有的课都学完了" : `今天 ${learnedToday}/${goal} 块 · 下一块：${esc(nx.L.id)}「${esc(nx.b.title)}」第 ${nx.step} 步`,
+      a: nx ? `<a class="btn ${reviewDone && !learnDone ? "primary" : ""}" href="${blockHref(nx.L, nx.b, nx.step)}">${learnDone ? tx("再学一块", "One more block") : tx("继续学", "Continue")}</a>` : "" },
+    { ok: sayDone, t: tx("🗣️ 讲", "Explain in your own words"), sub: sayDone ? "学完一整课后，用自己的话讲 3 个问题" : `${say[0].id}「${esc(say[0].title)}」学完了，讲一讲`,
+      a: sayDone ? "" : `<a class="btn" href="#/l/${say[0].id}#say">${tx("去讲", "Go explain")}</a>` },
+    { ok: log.checkin, t: tx("✅ 打卡", "Check in"), sub: log.checkin ? "今天完成了！" : canCheckin ? "可以打卡了：看看今天学了什么" : "先完成复习和学新内容", a: "" },
   ];
   const doneN = steps.filter((s) => s.ok).length;
   const el = h(`<div>
     <h1>今天 · ${m}月${dd}日 周${WEEK[new Date(y, m - 1, dd).getDay()]}</h1>
     <div class="stats">
-      <div><b>🔥 ${st}</b><span>连续学习天数</span></div>
-      <div><b>Lv${L.lv} ${L.name}</b>${bar(L.pct, "xp")}<span>${S.xp.total || 0}${L.next ? ` / ${L.next}` : ""} 经验</span></div>
-      <div><b>${Object.values(S.log).filter((l) => l.checkin).length}</b><span>完整打卡天数</span></div>
+      <div><b>🔥 ${st}</b><span>${tx("连续学习天数", "day streak")}</span></div>
+      <div><b>Lv${L.lv} ${L.name}</b>${bar(L.pct, "xp")}<span>${S.xp.total || 0}${L.next ? ` / ${L.next}` : ""} ${tx("经验", "XP")}</span></div>
+      <div><b>${Object.values(S.log).filter((l) => l.checkin).length}</b><span>${tx("完整打卡天数", "full days")}</span></div>
     </div>
     ${weekStrip()}
     <div class="card mission">
-      <div class="row"><h2>今日任务</h2><span class="spacer"></span><span class="muted">${doneN}/4</span></div>
+      <div class="row"><h2>${tx("今日任务", "Today's tasks")}</h2><span class="spacer"></span><span class="muted">${doneN}/4</span></div>
       ${bar((100 * doneN) / 4)}
       <ol class="todo"></ol>
       <div id="checkin"></div>
     </div>
-    <h2>总进度</h2><div id="overall"></div>
-    <h2>徽章</h2><div class="badges"></div>
-    <details class="card"><summary><b>每一小块怎么学？</b></summary><div class="body">${md("每一小块有 4 步：\n\n**① 学 + 抄**：读讲解，把例子**自己敲一遍**，运行对上结果。\n**② 改**：按提示改一处，**先猜结果再运行**。\n**③ 猜**：看代码猜输出，网站帮你对答案；看不懂点「复制给 AI 讲解」。\n**④ 默写**：只看一句要求，从空白开始写，网站自动判对错。\n\n学过的猜题和默写会在 1、2、4、7、15、30 天后回到「复习」里；做错的当天就回来。\n\n**经验值**：抄对 +10，改 +5，猜 +3（猜对再 +2），默写对 +15，复习一项 +5，完成一块 +20，讲完一课 +30，打卡 +30。")}</div></details>
+    <h2>${tx("总进度", "Overall progress")}</h2><div id="overall"></div>
+    <h2>${tx("徽章", "Badges")}</h2><div class="badges"></div>
+    <details class="card"><summary><b>${tx("每一小块怎么学？", "How does each block work?")}</b></summary><div class="body">${md("每一小块有 4 步：\n\n**① 学 + 抄**：读讲解，把例子**自己敲一遍**，运行对上结果。\n**② 改**：按提示改一处，**先猜结果再运行**。\n**③ 猜**：看代码猜输出，网站帮你对答案；看不懂点「复制给 AI 讲解」。\n**④ 默写**：只看一句要求，从空白开始写，网站自动判对错。\n\n学过的猜题和默写会在 1、2、4、7、15、30 天后回到「复习」里；做错的当天就回来。\n\n**经验值**：抄对 +10，改 +5，猜 +3（猜对再 +2），默写对 +15，复习一项 +5，完成一块 +20，讲完一课 +30，打卡 +30。")}${enMd(HOW_EN)}</div></details>
   </div>`);
   const ol = el.querySelector(".todo");
   steps.forEach((s, i) => ol.append(h(`<li class="${s.ok ? "ok" : ""}"><span class="tick">${s.ok ? "✓" : i + 1}</span><div><b>${s.t}</b><div class="muted">${s.sub}</div></div><span class="spacer"></span>${s.a}</li>`)));
@@ -266,7 +285,7 @@ function viewHome() {
     const card = h(`<div class="summary"><b>${log.checkin ? "🎉 今天完成了" : "今天的小结"}</b><pre class="out">${esc(daySummary())}</pre><div class="row"></div></div>`);
     const row = card.querySelector(".row");
     if (!log.checkin) {
-      const b = h(`<button class="primary big">✅ 打卡，完成今天</button>`);
+      const b = h(`<button class="primary big">✅ ${tx("打卡，完成今天", "Check in for today")}</button>`);
       b.onclick = () => { T().checkin = true; save("log"); touchDay(); addXP(30, "🎉 今天打卡完成"); viewHome(); };
       row.append(b);
     }
@@ -279,11 +298,11 @@ function viewHome() {
     const pub = DATA.lessons.filter((x) => x.stage === s.stage);
     const tot = pub.reduce((n, x) => n + x.blocks.length, 0);
     const done = pub.reduce((n, x) => n + lessonProgress(x).done, 0);
-    ov.append(h(`<a class="card stagecard" href="#/stage/${s.stage}"><div class="row"><b>阶段 ${s.stage} · ${esc(s.title)}</b><span class="spacer"></span><span class="muted">${pub.length}/${s.lessons.length} 课已上线</span></div>
+    ov.append(h(`<a class="card stagecard" href="#/stage/${s.stage}"><div class="row"><b>${tx(`阶段 ${s.stage} · ${esc(s.title)}`, s.title_en && `Stage ${s.stage} · ${s.title_en}`)}</b><span class="spacer"></span><span class="muted">${pub.length}/${s.lessons.length} 课已上线</span></div>
       ${bar(tot ? (100 * done) / tot : 0)}<div class="muted small">${tot ? `学完 ${done}/${tot} 块` : "还没上线：前面的课学完就会做出来"}</div></a>`));
   }
   const bd = el.querySelector(".badges");
-  for (const [icon, name, desc, got] of badges()) bd.append(h(`<div class="badge ${got ? "got" : ""}" title="${esc(desc)}"><span>${icon}</span><b>${name}</b><small>${esc(desc)}</small></div>`));
+  for (const [icon, name, desc, got, nameEn] of badges()) bd.append(h(`<div class="badge ${got ? "got" : ""}" title="${esc(desc)}"><span>${icon}</span><b>${tx(name, nameEn)}</b><small>${esc(desc)}</small></div>`));
   $app.replaceChildren(el);
 }
 
@@ -316,9 +335,9 @@ function lessonList(s) {
     const L = DATA.lessons.find((x) => x.id === it.id);
     if (L) {
       const p = lessonProgress(L);
-      ul.append(h(`<li><a href="#/l/${L.id}"><span class="lid">${esc(L.id)}</span><span class="t">${esc(L.title)}</span><span class="spacer"></span><span class="muted">${p.done === p.total ? "✅" : `${p.done}/${p.total}`}</span><span class="go">›</span></a>${bar((100 * p.done) / p.total)}</li>`));
+      ul.append(h(`<li><a href="#/l/${L.id}"><span class="lid">${esc(L.id)}</span><span class="t">${tx(esc(L.title), L.title_en || it.title_en)}</span><span class="spacer"></span><span class="muted">${p.done === p.total ? "✅" : `${p.done}/${p.total}`}</span><span class="go">›</span></a>${bar((100 * p.done) / p.total)}</li>`));
     } else {
-      const li = h(`<li class="soon" role="button" tabindex="0" title="${esc(SOON_TIP)}"><span class="lid">${esc(it.id)}</span><span class="t">${esc(it.title)}</span><span class="spacer"></span><span class="pill">制作中 ?</span></li>`);
+      const li = h(`<li class="soon" role="button" tabindex="0" title="${esc(SOON_TIP)}"><span class="lid">${esc(it.id)}</span><span class="t">${tx(esc(it.title), it.title_en)}</span><span class="spacer"></span><span class="pill">${tx("制作中 ?", "coming")}</span></li>`);
       li.onclick = () => toast(SOON_TIP, 5000);
       ul.append(li);
     }
@@ -326,15 +345,15 @@ function lessonList(s) {
   return ul;
 }
 const SOON_TIP = "「制作中」= 这一课还没上线。你学完前一课、把「讲」的答案发给 AI 检查通过后，AI 会根据你的情况把这一课做好放上来（通常第二天早上就有）。";
-const soonNote = () => h(`<div class="soon-note"><span class="pill">制作中</span> 表示这一课<b>还没上线</b>：课是一课一课做的。学完前一课 → 在课程页最下面「讲」→ 复制答案发给 AI 检查 → 通过后，AI 就把下一课做好放上来（通常第二天早上）。这样每一课都能根据你上一课的掌握情况来调整。</div>`);
+const soonNote = () => h(`<div class="soon-note"><span class="pill">制作中</span> 表示这一课<b>还没上线</b>：课是一课一课做的。学完前一课 → 在课程页最下面「讲」→ 复制答案发给 AI 检查 → 通过后，AI 就把下一课做好放上来（通常第二天早上）。这样每一课都能根据你上一课的掌握情况来调整。<div class="en">"Coming" means the lesson is not published yet. Lessons are made one at a time: finish the previous lesson, answer its "Explain" questions, and send them to the AI for review. Once you pass, the AI publishes the next lesson (usually the next morning), adjusted to how the last one went.</div></div>`);
 
 function viewLessons() {
-  const el = h(`<div><h1>课程</h1>
-    <div class="card body note-card">${md("课程分 6 个阶段。点一个阶段看里面的课。**课会一课一课地上线**：你学完一课、「讲」完给 AI 检查，AI 就把下一课做好放上来。灰色的是还没上线的。")}</div></div>`);
+  const el = h(`<div><h1>${tx("课程", "Courses")}</h1>
+    <div class="card body note-card">${md("课程分 6 个阶段。点一个阶段看里面的课。**课会一课一课地上线**：你学完一课、「讲」完给 AI 检查，AI 就把下一课做好放上来。灰色的是还没上线的。")}${enMd("The course has 6 stages. Tap a stage to see its lessons. **Lessons are published one at a time**: when you finish a lesson and the AI has reviewed your answers, it publishes the next one. Grey lessons are not published yet.")}</div></div>`);
   for (const s of DATA.syllabus) {
     const st = stageStats(s);
-    el.append(h(`<a class="card stagecard" href="#/stage/${s.stage}"><div class="row"><span class="stage">阶段 ${s.stage}</span><span class="spacer"></span><span class="muted small">${st.pub.length}/${s.lessons.length} 课已上线</span><span class="go">›</span></div>
-      <b>${esc(s.title)}</b>${bar(st.total ? (100 * st.done) / st.total : 0)}<div class="muted small">${st.total ? `学完 ${st.done}/${st.total} 块` : "还没上线：前面的课学完就会做出来"}</div></a>`));
+    el.append(h(`<a class="card stagecard" href="#/stage/${s.stage}"><div class="row"><span class="stage">${tx(`阶段 ${s.stage}`, `Stage ${s.stage}`)}</span><span class="spacer"></span><span class="muted small">${st.pub.length}/${s.lessons.length} 课已上线</span><span class="go">›</span></div>
+      <b>${tx(esc(s.title), s.title_en)}</b>${bar(st.total ? (100 * st.done) / st.total : 0)}<div class="muted small">${st.total ? `学完 ${st.done}/${st.total} 块` : "还没上线：前面的课学完就会做出来"}</div></a>`));
   }
   $app.replaceChildren(el);
 }
@@ -343,14 +362,14 @@ function viewStage(s) {
   const st = stageStats(s);
   const i = DATA.syllabus.indexOf(s);
   const prev = DATA.syllabus[i - 1], next = DATA.syllabus[i + 1];
-  const from = cameFrom === "home" ? ["#/", "今天"] : ["#/lessons", "全部阶段"];
+  const from = cameFrom === "home" ? ["#/", "今天", "Today"] : ["#/lessons", "全部阶段", "All stages"];
   const el = h(`<div></div>`);
-  el.append(backBar(from[0], from[1]));
-  el.append(h(`<div><div class="stage">阶段 ${s.stage} / ${DATA.syllabus.length}</div><h1 style="margin-top:0">${esc(s.title)}</h1>
-    ${s.goal ? `<div class="card body note-card"><b>学完能做到：</b>${esc(s.goal)}</div>` : ""}
+  el.append(backBar(from[0], from[1], "", from[2]));
+  el.append(h(`<div><div class="stage">阶段 ${s.stage} / ${DATA.syllabus.length}</div><h1 style="margin-top:0">${tx(esc(s.title), s.title_en)}</h1>
+    ${s.goal ? `<div class="card body note-card"><b>学完能做到：</b>${esc(s.goal)}${s.goal_en ? `<div class="en"><b>After this stage you can:</b> ${esc(s.goal_en)}</div>` : ""}</div>` : ""}
     <div class="row muted small"><span>${st.total ? `本阶段学完 ${st.done}/${st.total} 块` : "本阶段还没有上线的课"}</span><span class="spacer"></span><span>${st.pub.length}/${s.lessons.length} 课已上线</span></div>
     ${bar(st.total ? (100 * st.done) / st.total : 0)}</div>`));
-  const card = h(`<div class="card"><h2 style="margin-top:0">课</h2></div>`);
+  const card = h(`<div class="card"><h2 style="margin-top:0">${tx("课", "Lessons")}</h2></div>`);
   card.append(lessonList(s));
   if (st.pub.length < s.lessons.length) card.append(soonNote());
   el.append(card);
@@ -365,7 +384,7 @@ function viewStage(s) {
 const KIND = { video: ["📺", "视频"], case: ["🧩", "实战案例"], doc: ["📄", "文档"], community: ["💬", "社区"] };
 function resourcesCard(L) {
   if (!L.resources?.length) return null;
-  const card = h(`<div class="card"><h2 style="margin-top:0">📺 配套视频和案例</h2><p class="muted small">视频是英文的，可以打开 YouTube 的自动字幕（设置 → 字幕 → 自动翻译 → 中文）。先学本课，卡住了再看。</p><ul class="res"></ul></div>`);
+  const card = h(`<div class="card"><h2 style="margin-top:0">📺 ${tx("配套视频和案例", "Videos and real-world examples")}</h2><p class="muted small">视频是英文的，可以打开 YouTube 的自动字幕（设置 → 字幕 → 自动翻译 → 中文）。先学本课，卡住了再看。</p><ul class="res"></ul></div>`);
   const ul = card.querySelector("ul");
   for (const r of L.resources) {
     const [icon, name] = KIND[r.kind] || ["🔗", "链接"];
@@ -378,15 +397,15 @@ function resourcesCard(L) {
 function viewLesson(L) {
   const p = lessonProgress(L);
   const el = h(`<div></div>`);
-  el.append(backBar(`#/stage/${L.stage}`, `阶段 ${L.stage}`));
-  el.append(h(`<div><h1>${esc(L.id)} · ${esc(L.title)}</h1>
+  el.append(backBar(`#/stage/${L.stage}`, `阶段 ${L.stage}`, "", `Stage ${L.stage}`));
+  el.append(h(`<div><h1>${esc(L.id)} · ${tx(esc(L.title), L.title_en)}</h1>
     <div class="row muted small"><span>本课进度 ${p.done}/${p.total} 块</span></div>${bar((100 * p.done) / p.total)}
-    ${L.intro ? `<div class="card body">${md(L.intro)}</div>` : ""}
-    <div class="card"><h2 style="margin-top:0">小块</h2><ul class="blocks"></ul></div></div>`));
+    ${L.intro ? `<div class="card body">${md(L.intro)}${enMd(L.intro_en)}</div>` : ""}
+    <div class="card"><h2 style="margin-top:0">${tx("小块", "Blocks")}</h2><ul class="blocks"></ul></div></div>`));
   const ul = el.querySelector(".blocks");
   L.blocks.forEach((b, i) => {
     const s = stepsOf(b);
-    ul.append(h(`<li><a href="${blockHref(L, b, s.done ? 1 : 0)}"><span>${s.done ? "✅" : "⬜"}</span><span>${i + 1}. ${esc(b.title)}</span>
+    ul.append(h(`<li><a href="${blockHref(L, b, s.done ? 1 : 0)}"><span>${s.done ? "✅" : "⬜"}</span><span>${i + 1}. ${tx(esc(b.title), b.title_en)}</span>
       <span class="dots">${[s.copy, s.tweak, s.quiz || !b.quiz.length, s.drill || !b.drills.length].map((x, j) => `<i class="${x ? "on " + STEP_KEYS[j] : ""}" title="${STEP_NAMES[j]}"></i>`).join("")}</span></a></li>`));
   });
   const rc = resourcesCard(L);
@@ -400,15 +419,15 @@ function viewLesson(L) {
 function sayCard(L) {
   const ans = S.answers[L.id] || [];
   const done = lessonDone(L);
-  const card = h(`<div class="card say-card" id="say"><h2 style="margin-top:0">🗣️ 讲：用自己的话回答</h2><p class="muted">${done ? "整课学完了！写完点「复制答案」，粘贴给 AI 检查。自动保存。" : "整课学完后再写（现在也可以先写草稿）。自动保存。"}</p></div>`);
+  const card = h(`<div class="card say-card" id="say"><h2 style="margin-top:0">🗣️ ${tx("讲：用自己的话回答", "Explain it in your own words")}</h2><p class="muted">${done ? "整课学完了！写完点「复制答案」，粘贴给 AI 检查。自动保存。" : "整课学完后再写（现在也可以先写草稿）。自动保存。"}</p></div>`);
   L.questions.forEach((q, i) => {
-    card.append(h(`<p><b>${i + 1}. </b>${esc(q)}</p>`));
+    card.append(h(`<div><p><b>${i + 1}. </b>${esc(q)}</p>${L.questions_en?.[i] ? `<div class="en">${i + 1}. ${esc(L.questions_en[i])}</div>` : ""}</div>`));
     const ta = h(`<textarea class="say" placeholder="用你自己的话写…"></textarea>`);
     ta.value = ans[i] || "";
     ta.oninput = () => { S.answers[L.id] = S.answers[L.id] || []; S.answers[L.id][i] = ta.value; save("answers"); };
     card.append(ta);
   });
-  const btn = h(`<button class="primary" style="margin-top:10px">📋 复制答案给 AI 检查</button>`);
+  const btn = h(`<button class="primary" style="margin-top:10px">📋 ${tx("复制答案给 AI 检查", "Copy answers for AI review")}</button>`);
   btn.onclick = async () => {
     const a = S.answers[L.id] || [];
     const text = `${L.id} 做完了，帮我检查。我的「讲」：\n` + L.questions.map((q, i) => `${i + 1}. ${q}\n答：${(a[i] || "").trim() || "（没写）"}`).join("\n\n");
@@ -428,11 +447,11 @@ function viewBlock(L, b, step) {
   const flags = [s.copy, s.tweak, s.quiz || !b.quiz.length, s.drill || !b.drills.length];
   const p = lessonProgress(L);
   const el = h(`<div class="blockview step-${STEP_KEYS[step - 1]}"></div>`);
-  el.append(backBar(`#/l/${L.id}`, `${L.id} 本课目录`, `<span class="muted small">第 ${idx + 1}/${L.blocks.length} 块 · 已学完 ${p.done}</span>`));
+  el.append(backBar(`#/l/${L.id}`, `${L.id} 本课目录`, `<span class="muted small">第 ${idx + 1}/${L.blocks.length} 块 · 已学完 ${p.done}</span>`, `Lesson ${L.id}`));
   el.append(h(`<div>${bar((100 * (idx + (flags.filter(Boolean).length / 4))) / L.blocks.length)}
-    <div class="row"><h1>${esc(b.title)}</h1><span class="spacer"></span></div>
-    <div class="steps">${STEP_NAMES.map((n, i) => `<a href="#/l/${L.id}/${short}/${i + 1}" class="${STEP_KEYS[i]} ${i + 1 === step ? "on" : ""} ${flags[i] ? "done" : ""}">${"①②③④"[i]} ${n}</a>`).join("")}</div>
-    <div class="steptip">${STEP_TIPS[step - 1]}</div>
+    <div class="row"><h1>${tx(esc(b.title), b.title_en)}</h1><span class="spacer"></span></div>
+    <div class="steps">${STEP_NAMES.map((n, i) => `<a href="#/l/${L.id}/${short}/${i + 1}" class="${STEP_KEYS[i]} ${i + 1 === step ? "on" : ""} ${flags[i] ? "done" : ""}">${"①②③④"[i]} ${tx(n, STEP_NAMES_EN[i])}</a>`).join("")}</div>
+    <div class="steptip">${STEP_TIPS[step - 1]}<div class="en">${STEP_TIPS_EN[step - 1]}</div></div>
     <div id="stepbody"></div>
     <div class="navrow"></div></div>`));
   el.querySelector(".row").append(starBtn(b.id));
@@ -440,10 +459,10 @@ function viewBlock(L, b, step) {
   const nav = el.querySelector(".navrow");
   const go = (st) => { location.hash = `#/l/${L.id}/${short}/${st}`; };
   const nextBlock = L.blocks[idx + 1];
-  const prev = step > 1 ? h(`<button>← 上一步</button>`) : idx > 0 ? h(`<button>← 上一块</button>`) : h(`<a class="btn" href="#/l/${L.id}">← 本课目录</a>`);
+  const prev = step > 1 ? h(`<button>← ${tx("上一步", "Back")}</button>`) : idx > 0 ? h(`<button>← ${tx("上一块", "Previous block")}</button>`) : h(`<a class="btn" href="#/l/${L.id}">← ${tx("本课目录", "Lesson")}</a>`);
   if (step > 1) prev.onclick = () => go(step - 1);
   else if (idx > 0) prev.onclick = () => (location.hash = `#/l/${L.id}/${shortId(L.blocks[idx - 1])}/1`);
-  const label = step < 4 ? `下一步：${STEP_NAMES[step]} →` : nextBlock ? "下一块 →" : "完成本课 →";
+  const label = step < 4 ? tx(`下一步：${STEP_NAMES[step]} →`, `Next: ${STEP_NAMES_EN[step]}`) : nextBlock ? tx("下一块 →", "Next block") : tx("完成本课 →", "Finish lesson");
   const next = h(`<button class="primary">${label}</button>`);
   next.onclick = () => {
     if (step === 2 && !S.tweaked[b.id]) { S.tweaked[b.id] = true; save("tweaked"); touchDay(); addXP(5); }
@@ -463,7 +482,7 @@ function viewBlock(L, b, step) {
 }
 
 function stepCopy(body, b) {
-  body.append(h(`<div class="card body stepcard">${md(b.body)}</div>`));
+  body.append(h(`<div class="card body stepcard">${md(b.body)}${enMd(b.body_en)}</div>`));
   const markCopied = () => { if (!S.copied[b.id]) { S.copied[b.id] = true; save("copied"); touchDay(); addXP(10, "✍️ 抄对了"); checkBlockDone(b); } };
   if (!b.example) { markCopied(); return; }
   if (b.lang !== "python") {
@@ -472,14 +491,14 @@ function stepCopy(body, b) {
     return;
   }
   const card = h(`<div class="card stepcard"><b>例子</b><pre class="code">${esc(b.example)}</pre>
-    <p><b>✍️ 抄：</b>在下面<b>一个字一个字敲一遍</b>（不要粘贴），然后运行。输出和例子一样就过关。</p></div>`);
+    <p><b>✍️ 抄：</b>在下面<b>一个字一个字敲一遍</b>（不要粘贴），然后运行。输出和例子一样就过关。</p><div class="en"><b>Copy:</b> type the example below yourself, character by character (no pasting), then run it. It passes when the output matches.</div></div>`);
   const draftKey = b.id + "#copy";
   const ta = editor({ value: S.draft[draftKey] || "", placeholder: "照着上面的例子敲…（Tab = 4 个空格，Ctrl+Enter = 运行）", onChange: (v) => { S.draft[draftKey] = v; save("draft"); }, onRun: () => run() });
   ta.addEventListener("paste", () => toast("建议自己敲一遍，手会记住写法 🙂"));
   const res = h(`<div></div>`);
   const status = h(`<span class="status" data-run></span>`);
-  const btn = h(`<button class="primary">▶ 运行</button>`);
-  const skip = h(`<button>我已经很熟了，跳过</button>`);
+  const btn = h(`<button class="primary">▶ ${tx("运行", "Run")}</button>`);
+  const skip = h(`<button>${tx("我已经很熟了，跳过", "I know this, skip")}</button>`);
   async function run() {
     btn.disabled = true;
     const r = await runner.run(ta.value, b.files, status);
@@ -501,13 +520,13 @@ function stepTweak(body, b) {
   const card = h(`<div class="card stepcard"></div>`);
   let ta = null, lastOut = "";
   b.tweaks.forEach((t, i) => {
-    const tw = h(`<div class="tweak"><div class="body">${md(`**${i + 1}.** ${t.ask}`)}</div></div>`);
+    const tw = h(`<div class="tweak"><div class="body">${md(`**${i + 1}.** ${t.ask}`)}${t.ask_en ? enMd(`**${i + 1}.** ${t.ask_en}`) : ""}</div></div>`);
     const g = h(`<textarea class="guess" placeholder="我猜：…"></textarea>`);
     const k = `${b.id}#guess${i}`;
     g.value = S.draft[k] || ""; g.oninput = () => { S.draft[k] = g.value; save("draft"); };
     tw.append(g);
     const row = h(`<div class="row"></div>`);
-    if (t.answer) row.append(h(`<details><summary>看解释</summary><div class="body">${md(t.answer)}</div></details>`));
+    if (t.answer) row.append(h(`<details><summary>${tx("看解释", "Explanation")}</summary><div class="body">${md(t.answer)}${enMd(t.answer_en)}</div></details>`));
     row.append(h(`<span class="spacer"></span>`), aiBtn("复制给 AI 讲解", () => `我在练 Python「改一处、先猜结果」。请用简单中文给我讲解，并告诉我我猜得对不对、为什么。\n\n题目：${t.ask}\n我猜：${g.value.trim() || "（没写）"}\n\n原来的代码：\n${fence(b.example)}${ta ? `\n我改过的代码：\n${fence(ta.value)}\n运行结果：\n${fence(lastOut)}` : ""}${t.answer ? `\n网站的解释：${t.answer}` : ""}`, tw));
     tw.append(row);
     card.append(tw);
@@ -518,23 +537,23 @@ function stepTweak(body, b) {
     ta = editor({ value: S.draft[k] ?? b.example, onChange: (v) => { S.draft[k] = v; save("draft"); }, onRun: () => run() });
     const res = h(`<div></div>`);
     const status = h(`<span class="status" data-run></span>`);
-    const btn = h(`<button class="primary">▶ 运行</button>`);
-    const reset = h(`<button>↺ 恢复原样</button>`);
+    const btn = h(`<button class="primary">▶ ${tx("运行", "Run")}</button>`);
+    const reset = h(`<button>↺ ${tx("恢复原样", "Reset")}</button>`);
     async function run() { btn.disabled = true; const r = await runner.run(ta.value, b.files, status); btn.disabled = false; status.textContent = ""; lastOut = r.err || r.out; showResult(res, r); }
     btn.onclick = run;
     reset.onclick = () => { ta.value = b.example; S.draft[k] = b.example; save("draft"); res.innerHTML = ""; };
     const row = h(`<div class="row" style="margin-top:8px"></div>`); row.append(btn, status, h(`<span class="spacer"></span>`), reset);
-    card.append(h(`<p style="margin-top:14px"><b>在这里改代码试：</b></p>`), ta, row, res);
+    card.append(h(`<p style="margin-top:14px"><b>${tx("在这里改代码试：", "Try your change here:")}</b></p>`), ta, row, res);
   }
   body.append(card);
 }
 
 /** One guess-the-output card. onGraded(result) after self-grading. */
 function quizCard(q, onGraded, headline, ctx = "learn") {
-  const card = h(`<div class="card stepcard guesscard">${headline || ""}<div class="row"><b>这段代码会输出什么？</b><span class="spacer"></span></div><pre class="code">${esc(q.code)}</pre></div>`);
+  const card = h(`<div class="card stepcard guesscard">${headline || ""}<div class="row"><b>${tx("这段代码会输出什么？", "What does this code print?")}</b><span class="spacer"></span></div><pre class="code">${esc(q.code)}</pre></div>`);
   card.querySelector(".row").append(starBtn(q.id));
   const g = h(`<textarea class="guess" placeholder="把你猜的输出写在这里（写了才能帮你对答案）"></textarea>`);
-  const show = h(`<button class="primary">对答案</button>`);
+  const show = h(`<button class="primary">${tx("对答案", "Check")}</button>`);
   card.append(g, h(`<div class="row" style="margin-top:8px"></div>`));
   card.lastChild.append(show);
   show.onclick = () => {
@@ -542,15 +561,15 @@ function quizCard(q, onGraded, headline, ctx = "learn") {
     const typed = g.value.trim() !== "";
     const right = typed && guessMatches(g.value, q.answer);
     g.readOnly = true;
-    const verdict = !typed ? `<div class="verdict none">你没写猜测：在心里对一下，诚实地选。</div>`
-      : right ? `<div class="verdict ok">✔ 猜对了！</div>` : `<div class="verdict no">✗ 和你猜的不一样，看看差在哪</div>`;
-    const ans = h(`<div>${verdict}<p style="margin:10px 0 4px"><b>${q.error ? "会报错：" : "正确输出："}</b></p><pre class="out">${esc(q.answer) || "（没有输出）"}</pre>${q.explain ? `<div class="body">${md(q.explain)}</div>` : ""}
+    const verdict = !typed ? `<div class="verdict none">${tx("你没写猜测：在心里对一下，诚实地选。", "No guess written: compare in your head and grade yourself honestly.")}</div>`
+      : right ? `<div class="verdict ok">${tx("✔ 猜对了！", "Correct!")}</div>` : `<div class="verdict no">${tx("✗ 和你猜的不一样，看看差在哪", "Not quite: see what is different")}</div>`;
+    const ans = h(`<div>${verdict}<p style="margin:10px 0 4px"><b>${q.error ? tx("会报错：", "It raises an error:") : tx("正确输出：", "Correct output:")}</b></p><pre class="out">${esc(q.answer) || "（没有输出）"}</pre>${q.explain ? `<div class="body">${md(q.explain)}${enMd(q.explain_en)}</div>` : ""}
       <div class="row" style="margin:8px 0"></div>
       <p class="muted" style="margin-bottom:4px">${right ? "猜对了，选一个：" : "诚实地选："}</p><div class="row grades"></div></div>`);
     ans.querySelector(".row").append(aiBtn("复制给 AI 讲解", () => `我在练 Python「看代码猜输出」。请用简单中文：1. 一行一行讲清楚为什么输出是这样；2. 如果我猜错了，指出我错在哪个理解上；3. 再出一道类似的小题考我（先别给答案）。\n\n代码：\n${fence(q.code)}\n我猜的输出：\n${fence(g.value.trim() || "（没写）")}\n正确${q.error ? "报错" : "输出"}：\n${fence(q.answer)}${q.explain ? `\n网站的简短解释：${q.explain}` : ""}`, ans));
     const row = ans.querySelector(".grades");
-    for (const [r, label, cls] of [["wrong", "不认识", "bad"], ["fuzzy", "模糊", "fuzzy"], ["good", "认识", "good"]]) {
-      const bt = h(`<button class="${cls} ${right && r === "good" ? "suggest" : ""} ${typed && !right && r === "wrong" ? "suggest" : ""}">${label}</button>`);
+    for (const [r, label, cls, en] of [["wrong", "不认识", "bad", "Did not know"], ["fuzzy", "模糊", "fuzzy", "Unsure"], ["good", "认识", "good", "Knew it"]]) {
+      const bt = h(`<button class="${cls} ${right && r === "good" ? "suggest" : ""} ${typed && !right && r === "wrong" ? "suggest" : ""}" data-grade="${r}">${label}<span class="en-i">${en}</span></button>`);
       bt.onclick = () => {
         S.srs[q.id] = grade(S.srs[q.id], r, today()); save("srs"); touchDay();
         bump("quiz"); if (right) bump("quizRight");
@@ -580,16 +599,16 @@ function stepQuiz(body, quiz, done, b) {
 
 /** One write-from-memory drill. onGraded(result) when it is passed or given up. */
 function drillCard(d, onGraded, headline, ctx = "learn") {
-  const card = h(`<div class="card stepcard">${headline || ""}<div class="row"><b>✍️ 默写</b><span class="spacer"></span></div><div class="body task">${md(d.task)}</div></div>`);
+  const card = h(`<div class="card stepcard">${headline || ""}<div class="row"><b>✍️ ${tx("默写", "From memory")}</b><span class="spacer"></span></div><div class="body task">${md(d.task)}${enMd(d.task_en)}</div></div>`);
   card.querySelector(".row").append(starBtn(d.id));
   const k = d.id + "#draft";
   const ta = editor({ value: S.draft[k] ?? d.starter, placeholder: "关掉小抄，从这里开始写…（Ctrl+Enter 运行）", onChange: (v) => { S.draft[k] = v; save("draft"); }, onRun: () => run() });
   const res = h(`<div></div>`);
   const status = h(`<span class="status" data-run></span>`);
-  const btn = h(`<button class="primary">▶ 运行并检查</button>`);
-  const hintBtn = h(`<button>💡 提示</button>`);
-  const solBtn = h(`<button hidden>看答案</button>`);
-  const giveUp = h(`<button class="bad" hidden>不会，下次再练</button>`);
+  const btn = h(`<button class="primary">▶ ${tx("运行并检查", "Run and check")}</button>`);
+  const hintBtn = h(`<button>💡 ${tx("提示", "Hint")}</button>`);
+  const solBtn = h(`<button hidden>${tx("看答案", "Show answer")}</button>`);
+  const giveUp = h(`<button class="bad" hidden>${tx("不会，下次再练", "Skip for now")}</button>`);
   const hints = h(`<ol class="hints"></ol>`);
   let shown = 0, sawSolution = false, graded = false, last = null;
   if (!d.hints.length) hintBtn.hidden = true;
@@ -620,7 +639,7 @@ function drillCard(d, onGraded, headline, ctx = "learn") {
     }
   }
   btn.onclick = run;
-  hintBtn.onclick = () => { if (shown < d.hints.length) { hints.append(h(`<li>${md(d.hints[shown]).replace(/^<p>|<\/p>$/g, "")}</li>`)); shown++; } hintBtn.textContent = shown < d.hints.length ? `💡 提示（${shown}/${d.hints.length}）` : "💡 没有更多提示了"; hintBtn.disabled = shown >= d.hints.length; };
+  hintBtn.onclick = () => { if (shown < d.hints.length) { const he = d.hints_en?.[shown]; hints.append(h(`<li>${md(d.hints[shown]).replace(/^<p>|<\/p>$/g, "")}${he ? `<div class="en">${md(he).replace(/^<p>|<\/p>$/g, "")}</div>` : ""}</li>`)); shown++; } hintBtn.textContent = shown < d.hints.length ? `💡 提示（${shown}/${d.hints.length}）` : "💡 没有更多提示了"; hintBtn.disabled = shown >= d.hints.length; };
   solBtn.onclick = () => { sawSolution = true; solBtn.remove(); res.append(h(`<details open><summary>参考答案（看懂后关掉，自己再写一遍）</summary><pre class="code">${esc(d.solution)}</pre></details>`)); };
   giveUp.onclick = () => { finish("wrong"); toast("没关系，今天晚些时候它会再出现"); };
   const row = h(`<div class="row" style="margin-top:8px"></div>`);
@@ -642,8 +661,8 @@ function stepDrill(body, drills) {
 function viewReview() {
   const q = dueQueue(allItems(), S.srs, today());
   const el = h(`<div></div>`);
-  el.append(backBar("#/", "今天", `<span class="muted small">还剩 <b>${q.length}</b> 项 · 默写在前</span>`));
-  el.append(h(`<h1>📅 今日复习</h1>`));
+  el.append(backBar("#/", "今天", `<span class="muted small">还剩 <b>${q.length}</b> 项 · 默写在前</span>`, "Today"));
+  el.append(h(`<h1>📅 ${tx("今日复习", "Today's review")}</h1>`));
   const box = h(`<div id="rv"></div>`);
   el.append(box);
   if (!q.length) {
@@ -757,6 +776,11 @@ async function main() {
   }
   index();
   backfill();
+  applyEn();
+  document.getElementById("en-toggle").onclick = () => {
+    S.en = !S.en; save("en"); applyEn();
+    toast(S.en ? "已显示英文字幕 · English subtitles on" : "已隐藏英文字幕 · English subtitles off");
+  };
   window.addEventListener("hashchange", route);
   route();
 }

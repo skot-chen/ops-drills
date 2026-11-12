@@ -61,23 +61,29 @@
    "tweaks": [
     {
      "ask": "把 `\\d+ms` 改成 `\\d+`，先猜会找到哪个数字？",
-     "answer": "会找到 `2026`：`search` 从左往右，第一个「一串数字」就是日期里的年份。所以正则要写得**够具体**（后面带上 `ms`），才能找到你要的那个。"
+     "answer": "会找到 `2026`：`search` 从左往右，第一个「一串数字」就是日期里的年份。所以正则要写得**够具体**（后面带上 `ms`），才能找到你要的那个。",
+     "ask_en": "Change `\\d+ms` to `\\d+`. Guess first: which number will it find?",
+     "answer_en": "`2026`: `search` goes left to right, and the first run of digits is the year in the date. So a pattern must be **specific enough** (include the `ms`) to find the number you want."
     },
     {
      "ask": "把 `\\d+ms` 改成 `\\d+s`，先猜结果。",
-     "answer": "会报错 `AttributeError`。`\\d+s` 要「数字后面**紧跟** s」，但 `3000ms` 中间隔着 m，整行都找不到，`m` 是 `None`，`None` 没有 `.group()`。真实脚本里要先判断 `if m:` 再用。"
+     "answer": "会报错 `AttributeError`。`\\d+s` 要「数字后面**紧跟** s」，但 `3000ms` 中间隔着 m，整行都找不到，`m` 是 `None`，`None` 没有 `.group()`。真实脚本里要先判断 `if m:` 再用。",
+     "ask_en": "Change `\\d+ms` to `\\d+s`. Guess the result first.",
+     "answer_en": "It raises `AttributeError`. `\\d+s` needs digits **immediately** followed by s, but `3000ms` has an m in between, so nothing matches, `m` is `None`, and `None` has no `.group()`. In real scripts, check `if m:` before using it."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "import re\nm = re.search(r\"\\d+\", \"pool=39 port=5432\")\nprint(m.group())",
-     "explain": "找到第一个就停：39 在 5432 前面。"
+     "explain": "找到第一个就停：39 在 5432 前面。",
+     "explain_en": "It stops at the first match: 39 comes before 5432."
     },
     {
      "id": "q2",
      "code": "import re\nprint(re.search(r\"timeout\", \"connection refused\"))",
-     "explain": "找不到时返回 `None`，不是空字符串，也不报错。"
+     "explain": "找不到时返回 `None`，不是空字符串，也不报错。",
+     "explain_en": "When nothing is found it returns `None` — not an empty string, and no error."
     }
    ],
    "drills": [
@@ -88,9 +94,16 @@
       "先 `import re`，把这行日志放进一个变量",
       "正则是 `r\"\\d+ms\"`，结果用 `.group()` 拿"
      ],
-     "solution": "import re\nline = \"2026-11-10 09:40:05 ERROR gateway: POST /api/pay 502 87ms upstream=payment-svc\"\nm = re.search(r\"\\d+ms\", line)\nprint(m.group())"
+     "solution": "import re\nline = \"2026-11-10 09:40:05 ERROR gateway: POST /api/pay 502 87ms upstream=payment-svc\"\nm = re.search(r\"\\d+ms\", line)\nprint(m.group())",
+     "task_en": "In the log line below, use `re.search` to find the duration (digits + ms) and print it:\n\n```\n2026-11-10 09:40:05 ERROR gateway: POST /api/pay 502 87ms upstream=payment-svc\n```\n\nExpected output:\n\n```\n87ms\n```",
+     "hints_en": [
+      "`import re` first and put the line in a variable",
+      "The pattern is `r\"\\d+ms\"`; get the text with `.group()`"
+     ]
     }
-   ]
+   ],
+   "title_en": "re.search: find the first match",
+   "body_en": "A regex describes what something looks like:\n\n| Pattern | Meaning | Command-line equivalent |\n|---|---|---|\n| `\\d` | one digit | `[0-9]` |\n| `+` | the thing before it, 1 or more times | same in `grep -E` |\n| `.` | any single character | same |\n| `\\s` | whitespace (space, tab) | `[[:space:]]` |\n| `\\.` | a real dot | same |\n\n`re.search(pattern, text)` scans left to right and **stops at the first match**. If found it returns a \"match object\" — use `.group()` to get the text; if not found it returns `None`.\n\nPut `r` in front of a pattern (`r\"\\d+\"`) so Python leaves the backslashes alone."
   },
   {
    "id": "b2",
@@ -100,19 +113,23 @@
    "tweaks": [
     {
      "ask": "把正则里的 `\\.` 都换成 `.`，再加一句 `print(re.findall(r\"\\d+.\\d+\", \"v1x2 and 3.4\"))`，先猜第二行输出。",
-     "answer": "`['1x2', '3.4']`：没转义的点能匹配任意字符，连 `x` 也算。抽 IP、版本号时一定写 `\\.`。"
+     "answer": "`['1x2', '3.4']`：没转义的点能匹配任意字符，连 `x` 也算。抽 IP、版本号时一定写 `\\.`。",
+     "ask_en": "Replace every `\\.` in the pattern with `.`, and add `print(re.findall(r\"\\d+.\\d+\", \"v1x2 and 3.4\"))`. Guess the second line of output.",
+     "answer_en": "`['1x2', '3.4']`: an unescaped dot matches any character, even `x`. Always write `\\.` when extracting IPs or version numbers."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "import re\nprint(re.findall(r\"port=(\\d+)\", \"port=80 port=443\"))",
-     "explain": "有括号时只返回括号里的部分，而且是**字符串**，不是数字。"
+     "explain": "有括号时只返回括号里的部分，而且是**字符串**，不是数字。",
+     "explain_en": "With parentheses, only the part inside is returned — and as **strings**, not numbers."
     },
     {
      "id": "q2",
      "code": "import re\nprint(re.findall(r\"\\d+\", \"no numbers here\"))",
-     "explain": "找不到时 `findall` 返回空列表 `[]`（不像 `search` 返回 `None`）。"
+     "explain": "找不到时 `findall` 返回空列表 `[]`（不像 `search` 返回 `None`）。",
+     "explain_en": "When nothing matches, `findall` returns an empty list `[]` (unlike `search`, which returns `None`)."
     }
    ],
    "drills": [
@@ -127,12 +144,20 @@
      "solution": "import re\nn = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        if re.search(r\"\\d+\\.\\d+\\.\\d+\\.\\d+\", line):\n            n = n + 1\nprint(f\"含 IP 的行：{n}\")",
      "files": [
       "samples/demo.log"
+     ],
+     "task_en": "Count how many lines in `samples/demo.log` **contain an IP address** and print:\n\n```\n含 IP 的行：357\n```\n\n(含 IP 的行 = lines containing an IP)",
+     "hints_en": [
+      "Read line by line: `for line in f:`",
+      "`if re.search(IP_PATTERN, line):` add 1",
+      "IP pattern: `r\"\\d+\\.\\d+\\.\\d+\\.\\d+\"`"
      ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "re.findall: find all matches",
+   "body_en": "`re.findall(pattern, text)` finds **every** match and returns a list.\n\nFinding IP addresses: four groups of digits with **real dots** in between:\n\n```\n\\d+\\.\\d+\\.\\d+\\.\\d+\n```\n\nNote that `.` in a regex means \"any character\"; write `\\.` for a real dot.\n\nIf the pattern contains **parentheses**, `findall` returns only the part inside them — handy for \"just the number, not the prefix\"."
   },
   {
    "id": "b3",
@@ -142,19 +167,23 @@
    "tweaks": [
     {
      "ask": "把 `[\\w-]+` 改成 `\\w+`，先猜 `m` 会是什么？",
-     "answer": "`\\w` 不包含减号，`payment-svc` 匹配不上 `服务名:` 这个结构，整行失败，`m` 是 `None`，下一行 `.group` 报错。服务名、主机名里常有 `-`，要记得加上。"
+     "answer": "`\\w` 不包含减号，`payment-svc` 匹配不上 `服务名:` 这个结构，整行失败，`m` 是 `None`，下一行 `.group` 报错。服务名、主机名里常有 `-`，要记得加上。",
+     "ask_en": "Change `[\\w-]+` to `\\w+`. Guess first: what will `m` be?",
+     "answer_en": "`\\w` doesn't include the hyphen, so `payment-svc` can't match the `service:` part, the whole match fails, `m` is `None`, and the next `.group` raises an error. Service and host names often contain `-`; remember to allow it."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "import re\nm = re.match(r\"(\\w+)-(\\d+)\", \"web-01\")\nprint(m.group(1), m.group(2))",
-     "explain": "第 1 组是 `web`，第 2 组是 `01`——注意 `01` 是字符串，前面的 0 还在。"
+     "explain": "第 1 组是 `web`，第 2 组是 `01`——注意 `01` 是字符串，前面的 0 还在。",
+     "explain_en": "Group 1 is `web`, group 2 is `01` — note `01` is a string, so the leading 0 is kept."
     },
     {
      "id": "q2",
      "code": "import re\nprint(re.match(r\"\\d+\", \"id 42\"))",
-     "explain": "`match` 只看**开头**：开头是 `i` 不是数字，所以 `None`。想在中间找用 `search`。"
+     "explain": "`match` 只看**开头**：开头是 `i` 不是数字，所以 `None`。想在中间找用 `search`。",
+     "explain_en": "`match` only looks at the **start**: it starts with `i`, not a digit, so `None`. Use `search` to look anywhere."
     }
    ],
    "drills": [
@@ -169,12 +198,20 @@
      "solution": "import re\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for i, line in enumerate(f):\n        if i >= 3:\n            break\n        m = re.match(r\"^\\S+ \\S+ \\w+ ([\\w-]+):\", line)\n        print(m.group(1))",
      "files": [
       "samples/demo.log"
+     ],
+     "task_en": "Using groups, print the service names of the **first 3 lines** of `samples/demo.log`:\n\n```\norder-svc\npayment-svc\ngateway\n```",
+     "hints_en": [
+      "Use `enumerate(f)` and `break` when `i >= 3`",
+      "The pattern can stop at the service: `r\"^\\S+ \\S+ \\w+ ([\\w-]+):\"`",
+      "Print `m.group(1)`"
      ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "Groups: several fields at once",
+   "body_en": "Wrap the parts you want in **parentheses** to pull out time, level, service and message in one go:\n\n```\n^(\\S+ \\S+) (\\w+) ([\\w-]+): (.*)$\n  time       level  service     message\n```\n\n| Pattern | Meaning |\n|---|---|\n| `^` / `$` | start / end of line |\n| `\\S+` | a run of non-space characters |\n| `\\w+` | a run of letters, digits, underscores |\n| `[\\w-]+` | letters, digits, underscores **or hyphens** (service names like `payment-svc` have hyphens) |\n| `(.*)` | everything else |\n\n`m.group(1)` is the first group; `m.groups()` gives them all. `re.match` only matches at the **start**; `re.search` can find a match anywhere."
   },
   {
    "id": "b4",
@@ -184,19 +221,23 @@
    "tweaks": [
     {
      "ask": "去掉 `int(...)`，直接 `costs.append(m.group(1))`，先猜 `max` 会给出什么？",
-     "answer": "`'31'`：字符串按**字典顺序**比，`'3' > '1'`，所以 `'31'` 比 `'1890'` 大。数字一定要先 `int()`，这是排查脚本里很常见的坑。"
+     "answer": "`'31'`：字符串按**字典顺序**比，`'3' > '1'`，所以 `'31'` 比 `'1890'` 大。数字一定要先 `int()`，这是排查脚本里很常见的坑。",
+     "ask_en": "Remove `int(...)` and use `costs.append(m.group(1))`. Guess first: what does `max` give?",
+     "answer_en": "`'31'`: strings compare **alphabetically**, `'3' > '1'`, so `'31'` beats `'1890'`. Always convert numbers with `int()` first — a very common trap in ops scripts."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "print(max([\"9\", \"10\", \"100\"]))",
-     "explain": "字符串比的是第一个字符：`'9'` 最大。"
+     "explain": "字符串比的是第一个字符：`'9'` 最大。",
+     "explain_en": "Strings compare by first character: `'9'` is the largest."
     },
     {
      "id": "q2",
      "code": "import re\nm = re.search(r\"(\\d+)ms\", \"took 87ms\")\nprint(m.group(1) + 1)",
-     "explain": "`group(1)` 是字符串 `'87'`，不能和数字 1 相加，要写 `int(m.group(1)) + 1`。"
+     "explain": "`group(1)` 是字符串 `'87'`，不能和数字 1 相加，要写 `int(m.group(1)) + 1`。",
+     "explain_en": "`group(1)` is the string `'87'`, which can't be added to the number 1. Write `int(m.group(1)) + 1`."
     }
    ],
    "drills": [
@@ -211,12 +252,27 @@
      "solution": "import re\ncosts = []\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        if \" gateway: \" not in line:\n            continue\n        m = re.search(r\" (\\d+)ms\", line)\n        if m:\n            costs.append(int(m.group(1)))\nprint(f\"gateway 最慢 {max(costs)}ms\")",
      "files": [
       "samples/demo.log"
+     ],
+     "task_en": "In `samples/demo.log`, find the slowest **gateway** request and print:\n\n```\ngateway 最慢 2491ms\n```\n\n(最慢 = slowest)",
+     "hints_en": [
+      "`if \" gateway: \" not in line: continue`",
+      "`m = re.search(r\" (\\d+)ms\", line)`, then `if m:` and `int(...)`",
+      "Finally `print(f\"gateway 最慢 {max(costs)}ms\")`"
      ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "Extract numbers and calculate: the slowest request",
+   "body_en": "Everything a regex extracts is a **string**. To compare or add, convert with `int()` first.\n\nThe idea (same as `grep | awk | sort -n | tail -1`):\n\n1. Only look at gateway lines\n2. Extract the duration with `(\\d+)ms`\n3. `int()` it and add it to a list\n4. Find the largest with `max()`\n\nSkip lines where nothing matches (`m` is `None`)."
   }
+ ],
+ "title_en": "Regular expressions: pulling fields out of logs",
+ "intro_en": "Last lesson used `split` to cut log lines, which breaks easily when the format changes. This lesson teaches **regular expressions**: describing \"what the thing I want looks like\", e.g. \"digits followed by ms\" or \"four groups of digits separated by dots\".\n`grep -E` on the command line uses regular expressions; in Python you use the `re` module.",
+ "questions_en": [
+  "Why do we write r\"...\" in front of a regex? What can go wrong without the r?",
+  "In real systems, log formats change (e.g. an extra field appears in the middle). How do you write a regex that doesn't break easily?",
+  "When is split enough, and when do you really need a regex? Give one example of each."
  ]
 }

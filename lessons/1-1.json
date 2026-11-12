@@ -17,14 +17,17 @@
    "tweaks": [
     {
      "ask": "`enumerate(f)` 是什么意思？把 `i >= 5` 改成 `i >= 2` 试试。",
-     "answer": "`enumerate` 在拿出每一行的同时，给你一个从 0 开始的编号 `i`。改成 2 就只打印前 2 行。"
+     "answer": "`enumerate` 在拿出每一行的同时，给你一个从 0 开始的编号 `i`。改成 2 就只打印前 2 行。",
+     "ask_en": "What does `enumerate(f)` mean? Try changing `i >= 5` to `i >= 2`.",
+     "answer_en": "`enumerate` gives you a number `i`, starting at 0, along with each line. With 2, only the first 2 lines are printed."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "for i, x in enumerate([\"a\", \"b\", \"c\"]):\n    print(i, x)",
-     "explain": "`enumerate` 从 0 开始编号。"
+     "explain": "`enumerate` 从 0 开始编号。",
+     "explain_en": "`enumerate` starts numbering at 0."
     }
    ],
    "drills": [
@@ -35,12 +38,19 @@
       "循环前 `n = 0`，每行加 1",
       "最后 `print(f\"一共 {n} 行\")`"
      ],
-     "solution": "n = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        n = n + 1\nprint(f\"一共 {n} 行\")"
+     "solution": "n = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        n = n + 1\nprint(f\"一共 {n} 行\")",
+     "task_en": "Count how many lines `samples/demo.log` has and print:\n\n```\n一共 4314 行\n```\n\n(一共 … 行 = … lines in total)",
+     "hints_en": [
+      "`n = 0` before the loop, add 1 for each line",
+      "Finally `print(f\"一共 {n} 行\")`"
+     ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "Read line by line, count lines",
+   "body_en": "The format of each log line:\n\n```\n2026-11-10 09:00:00 INFO order-svc: order 10494 created by user 2996\ndate       time     level service:  message…\n```\n\n`for line in f` is **streaming**: it takes one line at a time, like `tail` or `grep`, so even a huge file won't fill up memory."
   },
   {
    "id": "b2",
@@ -50,14 +60,17 @@
    "tweaks": [
     {
      "ask": "去掉 `not parts[0].startswith(\"20\")` 这个条件，结果有什么不同？",
-     "answer": "乱码那一行有 8 个词，`len(parts) < 4` 拦不住它，于是它的第 3 个词 `garbage` 被当成了「级别」。只看段数不够，还要看格式。"
+     "answer": "乱码那一行有 8 个词，`len(parts) < 4` 拦不住它，于是它的第 3 个词 `garbage` 被当成了「级别」。只看段数不够，还要看格式。",
+     "ask_en": "Remove the condition `not parts[0].startswith(\"20\")`. What changes?",
+     "answer_en": "The garbage line has 8 words, so `len(parts) < 4` doesn't stop it, and its third word `garbage` is treated as a \"level\". Counting pieces isn't enough; you also have to check the format."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "print(len(\"\".split(\" \")))\nprint(\"\".split(\" \"))",
-     "explain": "空字符串 split 之后是 `['']`，长度是 1，不是 0。"
+     "explain": "空字符串 split 之后是 `['']`，长度是 1，不是 0。",
+     "explain_en": "Splitting an empty string gives `['']`, which has length 1, not 0."
     }
    ],
    "drills": [
@@ -69,12 +82,20 @@
       "用上面的判断条件 `continue` 跳过",
       "排序：`sorted(counts.items(), key=lambda kv: kv[1], reverse=True)`"
      ],
-     "solution": "counts = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        lv = parts[2]\n        counts[lv] = counts.get(lv, 0) + 1\nfor lv, n in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):\n    print(lv, n)"
+     "solution": "counts = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        lv = parts[2]\n        counts[lv] = counts.get(lv, 0) + 1\nfor lv, n in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):\n    print(lv, n)",
+     "task_en": "Count how many lines of each **level** `samples/demo.log` has (use a dictionary) and **skip** lines that don't look like log lines. Print most first, one `level count` per line:\n\n```\nINFO 3612\nERROR 493\nFATAL 163\nWARN 45\n```",
+     "hints_en": [
+      "First count without skipping and see what strange \"level\" shows up",
+      "Skip it with the check above and `continue`",
+      "Sort: `sorted(counts.items(), key=lambda kv: kv[1], reverse=True)`"
+     ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "Skip dirty data",
+   "body_en": "Real logs often contain multi-line stack traces, half-written lines, empty lines and garbage.\n**A reliable script skips lines it can't understand — it neither crashes nor counts them wrongly.**\n\nA simple check for \"does this look like a normal log line?\":\n\n```\nparts = line.strip().split(\" \")\nif len(parts) < 4 or not parts[0].startswith(\"20\"):\n    continue          ← skip this line\n```"
   },
   {
    "id": "b3",
@@ -84,14 +105,17 @@
    "tweaks": [
     {
      "ask": "把 `!= \"ERROR\"` 改成 `not in (\"ERROR\", \"FATAL\")`，结果会怎样？",
-     "answer": "FATAL 比 ERROR 更严重，通常也要算进来。改了以后，ERROR 和 FATAL 都会被统计。"
+     "answer": "FATAL 比 ERROR 更严重，通常也要算进来。改了以后，ERROR 和 FATAL 都会被统计。",
+     "ask_en": "Change `!= \"ERROR\"` to `not in (\"ERROR\", \"FATAL\")`. What happens?",
+     "answer_en": "FATAL is more severe than ERROR and usually should be counted too. After the change, both ERROR and FATAL are counted."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "svc = \"payment-svc:\"\nprint(svc.rstrip(\":\"), svc.strip(\":\"), svc[:-1])",
-     "explain": "三种写法都能去掉最后的冒号。`rstrip(\":\")` 最稳：没有冒号时也不会删错字。"
+     "explain": "三种写法都能去掉最后的冒号。`rstrip(\":\")` 最稳：没有冒号时也不会删错字。",
+     "explain_en": "All three remove the trailing colon. `rstrip(\":\")` is the safest: when there's no colon it doesn't remove anything by mistake."
     }
    ],
    "drills": [
@@ -102,12 +126,19 @@
       "在数级别的代码基础上改：多一个 `if parts[2] != \"ERROR\": continue`",
       "字典的名字用 `parts[3].rstrip(\":\")`"
      ],
-     "solution": "errors = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        if parts[2] != \"ERROR\":\n            continue\n        svc = parts[3].rstrip(\":\")\n        errors[svc] = errors.get(svc, 0) + 1\nfor svc, n in sorted(errors.items(), key=lambda kv: kv[1], reverse=True):\n    print(svc, n)"
+     "solution": "errors = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        if parts[2] != \"ERROR\":\n            continue\n        svc = parts[3].rstrip(\":\")\n        errors[svc] = errors.get(svc, 0) + 1\nfor svc, n in sorted(errors.items(), key=lambda kv: kv[1], reverse=True):\n    print(svc, n)",
+     "task_en": "Count the **ERROR lines per service** in `samples/demo.log` (ERROR only, not FATAL), skip dirty data, and print most first:\n\n```\npayment-svc 327\ngateway 152\norder-svc 14\n```",
+     "hints_en": [
+      "Start from the level-counting code and add `if parts[2] != \"ERROR\": continue`",
+      "Use `parts[3].rstrip(\":\")` as the dictionary key"
+     ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "Errors per service",
+   "body_en": "What you most want to know when on call: **which service has the most errors?**\n\nSame as counting levels, with one more condition: only look at ERROR lines and use the **service name** as the dictionary key.\nThe service name ends with a colon, `order-svc:` — remember to remove it.\n\nAfter this step you have written `grep ERROR | awk '{print $4}' | sort | uniq -c | sort -rn` in Python."
   },
   {
    "id": "b4",
@@ -117,14 +148,17 @@
    "tweaks": [
     {
      "ask": "`t[:5]`、`t[:2]`、`t[3:5]` 分别是什么意思？",
-     "answer": "切片 `[a:b]` 取第 a 到第 b-1 个字符：`[:5]` 是前 5 个 → `09:40`；`[:2]` 是小时；`[3:5]` 是分钟。"
+     "answer": "切片 `[a:b]` 取第 a 到第 b-1 个字符：`[:5]` 是前 5 个 → `09:40`；`[:2]` 是小时；`[3:5]` 是分钟。",
+     "ask_en": "What do `t[:5]`, `t[:2]` and `t[3:5]` mean?",
+     "answer_en": "A slice `[a:b]` takes characters a to b-1: `[:5]` is the first 5 → `09:40`; `[:2]` is the hour; `[3:5]` is the minute."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "first = {}\nfor svc, t in [(\"db\", \"09:40\"), (\"gateway\", \"09:41\"), (\"db\", \"09:42\")]:\n    if svc not in first:\n        first[svc] = t\nprint(first)",
-     "explain": "`if svc not in first` 保证只记下**第一次**出现的时间。"
+     "explain": "`if svc not in first` 保证只记下**第一次**出现的时间。",
+     "explain_en": "`if svc not in first` makes sure only the **first** time is recorded."
     }
    ],
    "drills": [
@@ -136,12 +170,20 @@
       "级别判断：`parts[2] in (\"ERROR\", \"FATAL\")`",
       "按时间排：`sorted(first.items(), key=lambda kv: kv[1])`，打印 `时间 服务名`"
      ],
-     "solution": "first = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        if parts[2] not in (\"ERROR\", \"FATAL\"):\n            continue\n        svc = parts[3].rstrip(\":\")\n        if svc not in first:\n            first[svc] = parts[1]\nfor svc, t in sorted(first.items(), key=lambda kv: kv[1]):\n    print(t, svc)"
+     "solution": "first = {}\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        parts = line.strip().split(\" \")\n        if len(parts) < 4 or not parts[0].startswith(\"20\"):\n            continue\n        if parts[2] not in (\"ERROR\", \"FATAL\"):\n            continue\n        svc = parts[3].rstrip(\":\")\n        if svc not in first:\n            first[svc] = parts[1]\nfor svc, t in sorted(first.items(), key=lambda kv: kv[1]):\n    print(t, svc)",
+     "task_en": "Find **the first time each service logs an ERROR or FATAL** in `samples/demo.log` (to the second — just use piece 2), and print them from earliest to latest:\n\n```\n09:04:21 order-svc\n09:40:00 gateway\n09:40:01 db\n09:40:01 payment-svc\n```\n\nThen read those lines in the log: is the order-svc one related to the 09:40 incident? gateway was 1 second earlier than db — is it the root cause? (This will be \"Explain\" question 3.)",
+     "hints_en": [
+      "A dictionary `first`: service → first failure time; `if svc not in first:` records only the first",
+      "Level check: `parts[2] in (\"ERROR\", \"FATAL\")`",
+      "Sort by time: `sorted(first.items(), key=lambda kv: kv[1])`, print `time service`"
+     ]
     }
    ],
    "files": [
     "samples/demo.log"
-   ]
+   ],
+   "title_en": "Find the minute the incident started",
+   "body_en": "The service with the most errors is **not necessarily the root cause**: when a downstream database breaks, the upstream payment service floods the log with timeouts.\nTo find the root cause, look for **who failed first**.\n\nThe time is piece 2, `09:40:01`; its first 5 characters `09:40` are the minute. Strings can be sliced too: `\"09:40:01\"[:5]`."
   }
  ],
  "resources": [
@@ -180,5 +222,12 @@
    "source": "Reddit",
    "note": "搜 python log 能看到别人怎么用脚本处理日志"
   }
+ ],
+ "title_en": "Counting logs with Python",
+ "intro_en": "On the command line you'd usually do: `grep ERROR app.log | awk '{print $4}' | sort | uniq -c | sort -rn`.\nThis lesson does the same thing in Python and handles \"dirty data\" properly. It's the first step of AIOps: **turning manual log checks into a program**.\nAll data is `samples/demo.log` (about 4,300 lines, with an incident around 09:40).",
+ "questions_en": [
+  "Compared with reading the whole file at once, what's good about `for line in f`? What difference would it make for a 10 GB log?",
+  "If the script didn't skip that garbage line in the log, what would go wrong? What other kinds of \"dirty data\" show up in real environments?",
+  "Look at the errors-per-service result, then read the log: which service do you think failed first? Why is the service with the most errors not necessarily the root cause?"
  ]
 }

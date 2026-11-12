@@ -61,19 +61,23 @@
    "tweaks": [
     {
      "ask": "把 `return parts[2]` 改成 `print(parts[2])`，先猜输出有几行？",
-     "answer": "4 行：函数里自己打印一次级别，外面的 `print` 再打印一次函数结果——没有 `return`，结果是 `None`。所以输出是 `ERROR`、`None`、`INFO`、`None`。"
+     "answer": "4 行：函数里自己打印一次级别，外面的 `print` 再打印一次函数结果——没有 `return`，结果是 `None`。所以输出是 `ERROR`、`None`、`INFO`、`None`。",
+     "ask_en": "Change `return parts[2]` to `print(parts[2])`. Guess first: how many lines of output?",
+     "answer_en": "4 lines: the function prints the level itself, then the outer `print` prints the function's result — which is `None` without a `return`. So the output is `ERROR`, `None`, `INFO`, `None`."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "def add(a, b):\n    a + b\n\nprint(add(1, 2))",
-     "explain": "算了但没 `return`，结果是 `None`。"
+     "explain": "算了但没 `return`，结果是 `None`。",
+     "explain_en": "It calculates but doesn't `return`, so the result is `None`."
     },
     {
      "id": "q2",
      "code": "def f():\n    return 1\n    print(\"after\")\n\nprint(f())",
-     "explain": "`return` 之后函数就结束了，下面那行不会执行。"
+     "explain": "`return` 之后函数就结束了，下面那行不会执行。",
+     "explain_en": "The function ends at `return`; the line after it never runs."
     }
    ],
    "drills": [
@@ -84,9 +88,16 @@
       "级别是 `line.split(\" \")[2]`",
       "`return level == \"ERROR\" or level == \"FATAL\"`，也可以写 `level in (\"ERROR\", \"FATAL\")`"
      ],
-     "solution": "def is_error(line):\n    level = line.split(\" \")[2]\n    return level in (\"ERROR\", \"FATAL\")\n\nprint(is_error(\"2026-11-10 09:40:01 ERROR db: timeout\"))\nprint(is_error(\"2026-11-10 09:40:02 INFO gateway: ok\"))\nprint(is_error(\"2026-11-10 09:40:03 FATAL db: too many connections\"))"
+     "solution": "def is_error(line):\n    level = line.split(\" \")[2]\n    return level in (\"ERROR\", \"FATAL\")\n\nprint(is_error(\"2026-11-10 09:40:01 ERROR db: timeout\"))\nprint(is_error(\"2026-11-10 09:40:02 INFO gateway: ok\"))\nprint(is_error(\"2026-11-10 09:40:03 FATAL db: too many connections\"))",
+     "task_en": "Write a function `is_error(line)` that returns `True` when the level is `ERROR` or `FATAL`, otherwise `False`. Print the result for these 3 lines:\n\n```\n2026-11-10 09:40:01 ERROR db: timeout\n2026-11-10 09:40:02 INFO gateway: ok\n2026-11-10 09:40:03 FATAL db: too many connections\n```\n\nExpected output:\n\n```\nTrue\nFalse\nTrue\n```",
+     "hints_en": [
+      "The level is `line.split(\" \")[2]`",
+      "`return level == \"ERROR\" or level == \"FATAL\"`, or `level in (\"ERROR\", \"FATAL\")`"
+     ]
     }
-   ]
+   ],
+   "title_en": "def and return",
+   "body_en": "```\ndef function_name(parameters):\n    do things\n    return result\n```\n\n- `def` defines a function; the lines after the colon are indented.\n- `return` **hands the result back** so the caller can use it.\n- A function without `return` gives `None`.\n\n`print` is \"show it to a person\"; `return` is \"give it to the program\" — beginners mix these up most often."
   },
   {
    "id": "b2",
@@ -96,19 +107,23 @@
    "tweaks": [
     {
      "ask": "调用 `count_level(logs, \"error\")`（小写），先猜结果。",
-     "answer": "`0`：字符串比较区分大小写。想不区分，可以比较前都 `.upper()`。"
+     "answer": "`0`：字符串比较区分大小写。想不区分，可以比较前都 `.upper()`。",
+     "ask_en": "Call `count_level(logs, \"error\")` (lower case). Guess the result first.",
+     "answer_en": "`0`: string comparison is case-sensitive. To ignore case, `.upper()` both sides before comparing."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "def greet(name, times=2):\n    return name * times\n\nprint(greet(\"ab\"))\nprint(greet(\"ab\", 3))",
-     "explain": "字符串 × 数字 = 重复。不写 `times` 就用默认的 2。"
+     "explain": "字符串 × 数字 = 重复。不写 `times` 就用默认的 2。",
+     "explain_en": "String × number = repetition. Leaving out `times` uses the default, 2."
     },
     {
      "id": "q2",
      "code": "def f(a, b=1):\n    return a + b\n\nprint(f(b=5, a=2))",
-     "explain": "写上参数名时，顺序可以随便。"
+     "explain": "写上参数名时，顺序可以随便。",
+     "explain_en": "With parameter names, the order doesn't matter."
     }
    ],
    "drills": [
@@ -120,9 +135,17 @@
       "`int(text[:-2])` 去掉最后 2 个字符",
       "秒：`int(text[:-1]) * 1000`"
      ],
-     "solution": "def to_ms(text):\n    if text.endswith(\"ms\"):\n        return int(text[:-2])\n    return int(text[:-1]) * 1000\n\nprint(to_ms(\"3s\"))\nprint(to_ms(\"250ms\"))\nprint(to_ms(\"3s\") + to_ms(\"250ms\"))"
+     "solution": "def to_ms(text):\n    if text.endswith(\"ms\"):\n        return int(text[:-2])\n    return int(text[:-1]) * 1000\n\nprint(to_ms(\"3s\"))\nprint(to_ms(\"250ms\"))\nprint(to_ms(\"3s\") + to_ms(\"250ms\"))",
+     "task_en": "Write a function `to_ms(text)` that turns `\"3s\"` into `3000` and `\"250ms\"` into `250` (returning numbers). Print:\n\n```\n3000\n250\n3250\n```\n\n(The third line is `to_ms(\"3s\") + to_ms(\"250ms\")`.)",
+     "hints_en": [
+      "Check `text.endswith(\"ms\")` first — ms must come first, because `\"250ms\"` also ends with s",
+      "`int(text[:-2])` drops the last 2 characters",
+      "Seconds: `int(text[:-1]) * 1000`"
+     ]
     }
-   ]
+   ],
+   "title_en": "Default parameter values",
+   "body_en": "Parameters can have **default values**, used when the caller leaves them out.\n\n```\ndef count_level(lines, level=\"ERROR\"):\n```\n\n- `count_level(lines)` → counts ERROR\n- `count_level(lines, \"WARN\")` → counts WARN\n- `count_level(lines, level=\"WARN\")` → clearer with the name\n\nA good function: **does one thing, has a name that says what it does, and gets everything it needs through its parameters**."
   },
   {
    "id": "b3",
@@ -132,23 +155,29 @@
    "tweaks": [
     {
      "ask": "故意把第一个 assert 的期望改错（比如 `\"to IP\"`），先猜会看到什么？",
-     "answer": "程序在那一行停下，报 `AssertionError`，最后的 print 不会执行。**测试失败是好事**：它在用户发现之前，先告诉你哪里不对。"
+     "answer": "程序在那一行停下，报 `AssertionError`，最后的 print 不会执行。**测试失败是好事**：它在用户发现之前，先告诉你哪里不对。",
+     "ask_en": "Deliberately make the first assert's expected value wrong (e.g. `\"to IP\"`). Guess first: what will you see?",
+     "answer_en": "The program stops on that line with `AssertionError`, and the final print never runs. **A failing test is a good thing**: it tells you what's wrong before users find out."
     },
     {
      "ask": "`re.sub` 是新出现的：它和 `re.findall` 有什么不同？",
-     "answer": "`findall` 是「找出来」，`sub` 是「找到后替换掉」。把 IP 换成 `<IP>`，正是日志模板化的第一步（后面阶段 4 会用到）。"
+     "answer": "`findall` 是「找出来」，`sub` 是「找到后替换掉」。把 IP 换成 `<IP>`，正是日志模板化的第一步（后面阶段 4 会用到）。",
+     "ask_en": "`re.sub` is new here: how is it different from `re.findall`?",
+     "answer_en": "`findall` finds things; `sub` finds them and **replaces** them. Replacing IPs with `<IP>` is the first step of log templating (used again in stage 4)."
     }
    ],
    "quiz": [
     {
      "id": "q1",
      "code": "assert 1 + 1 == 2\nprint(\"ok\")",
-     "explain": "条件成立，assert 什么都不做。"
+     "explain": "条件成立，assert 什么都不做。",
+     "explain_en": "The condition is true, so assert does nothing."
     },
     {
      "id": "q2",
      "code": "x = 2\nassert x == 3, \"x 应该是 3\"\nprint(\"done\")",
-     "explain": "条件不成立：抛出 `AssertionError`，带着你写的那句说明，下面的 print 不执行。"
+     "explain": "条件不成立：抛出 `AssertionError`，带着你写的那句说明，下面的 print 不执行。",
+     "explain_en": "The condition is false: `AssertionError` is raised with your message, and the print below never runs."
     }
    ],
    "drills": [
@@ -160,9 +189,17 @@
       "`assert service_of(\"...\") == \"payment-svc\"`",
       "3 个 assert 用 3 行不同的日志"
      ],
-     "solution": "def service_of(line):\n    return line.split(\" \")[3].rstrip(\":\")\n\nassert service_of(\"2026-11-10 09:40:01 ERROR payment-svc: timeout\") == \"payment-svc\"\nassert service_of(\"2026-11-10 09:40:02 INFO gateway: ok\") == \"gateway\"\nassert service_of(\"2026-11-10 09:40:03 FATAL db: down\") == \"db\"\nprint(\"全部通过\")"
+     "solution": "def service_of(line):\n    return line.split(\" \")[3].rstrip(\":\")\n\nassert service_of(\"2026-11-10 09:40:01 ERROR payment-svc: timeout\") == \"payment-svc\"\nassert service_of(\"2026-11-10 09:40:02 INFO gateway: ok\") == \"gateway\"\nassert service_of(\"2026-11-10 09:40:03 FATAL db: down\") == \"db\"\nprint(\"全部通过\")",
+     "task_en": "Write a function `service_of(line)` that returns the service name of a log line (without the colon). Then write **3 asserts** to test it; when all pass, print:\n\n```\n全部通过\n```\n\n(全部通过 = all passed). You can test with lines like `\"2026-11-10 09:40:01 ERROR payment-svc: timeout\"` → `\"payment-svc\"`.",
+     "hints_en": [
+      "The service is `line.split(\" \")[3]`, then `.rstrip(\":\")`",
+      "`assert service_of(\"...\") == \"payment-svc\"`",
+      "Use 3 different log lines for the 3 asserts"
+     ]
     }
-   ]
+   ],
+   "title_en": "assert: the simplest test",
+   "body_en": "`assert condition` means \"I claim this is true\". If it is, nothing happens; if not, Python raises `AssertionError` and stops.\n\n```\nassert to_ms(\"3s\") == 3000\nassert to_ms(\"250ms\") == 250\n```\n\nThat's a **test**: write down \"input → expected result\" and let the program check it. After changing the function, run it again and you know immediately whether you broke something.\n\nYou can add a message: `assert x == 3, \"x should be 3\"` — it's shown when the check fails."
   },
   {
    "id": "b4",
@@ -173,7 +210,9 @@
    "tweaks": [
     {
      "ask": "如果把 `is_error` 改成只认 `ERROR`、不认 `FATAL`，现有的两个测试会发现吗？",
-     "answer": "不会：两个测试都没用到 FATAL。测试只能发现你**写到了**的情况。所以要给容易出错的地方（边界、特殊值）专门加测试，比如加一个 `test_fatal_line`。"
+     "answer": "不会：两个测试都没用到 FATAL。测试只能发现你**写到了**的情况。所以要给容易出错的地方（边界、特殊值）专门加测试，比如加一个 `test_fatal_line`。",
+     "ask_en": "If `is_error` were changed to accept only `ERROR` and not `FATAL`, would the two existing tests notice?",
+     "answer_en": "No: neither test uses FATAL. Tests only catch the cases **you wrote down**. So add tests for the risky spots (edge cases, special values), e.g. a `test_fatal_line`."
     }
    ],
    "quiz": [
@@ -181,9 +220,19 @@
      "id": "q1",
      "code": "# 有 3 个测试，第 2 个失败了\n$ pytest -q",
      "answer": ".F.\n1 failed, 2 passed",
-     "explain": "通过是 `.`，失败是 `F`，按顺序排。最后一行是汇总（真实输出还会打印失败的详细原因）。"
+     "explain": "通过是 `.`，失败是 `F`，按顺序排。最后一行是汇总（真实输出还会打印失败的详细原因）。",
+     "explain_en": "A pass is `.`, a failure is `F`, in order. The last line is the summary (real output also prints the details of each failure)."
     }
-   ]
+   ],
+   "title_en": "pytest: how real projects run tests",
+   "body_en": "In real projects, tests live in separate files whose names start with `test_`, and **pytest** runs them all at once.\n\n- Each test is a function whose name starts with `test_`, containing `assert`s\n- Run `pytest -q` in a terminal\n- Each passing test shows a `.`, each failing one an `F`\n\npytest can't be installed in the browser, so this block is **read-only**. To try it yourself: in GitHub Codespaces or on your own computer, `pip install pytest`, create the two files below, and run `pytest -q`."
   }
+ ],
+ "title_en": "Functions and tests: change scripts with confidence",
+ "intro_en": "As scripts grow, every change risks breaking something else. This lesson covers two things:\n\n1. **Functions**: wrap one small job, give it a name, use it anywhere.\n2. **Tests**: a few lines of code that check a function automatically. Run them after every change — green means safe.",
+ "questions_en": [
+  "Why split code into functions instead of one long top-to-bottom script?",
+  "In a real situation, you change a log-parsing script. How do you make sure it still handles the cases it handled before?",
+  "If all tests pass, does that mean the code is definitely correct? Why or why not?"
  ]
 }
