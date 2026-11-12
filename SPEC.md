@@ -97,7 +97,7 @@ with real Python (cwd = `files/`), stores their outputs, and fails on errors or 
 - **今日任务** home: ① 复习 (due items) → ② 学新内容 (daily goal 1–3 blocks, set in ⚙) → ③ 讲 (when a lesson is finished)
   → ④ 打卡 (summary of the day + 📋 copy for the AI). Week strip (active / checked-in days), 🔥 streak, XP + levels, badges.
 - Own look (navy/indigo, not the vocabulary site's beige/green); each step has its own colour (学 blue, 改 amber, 猜 violet, 默写 teal).
-- Obvious back button on every lesson/block page; lesson progress bar; step nav sticks to the bottom of the screen.
+- Hierarchy 今天/课程 → 阶段 (#/stage/N) → 课 → 小块; every non-top page has a back button one level up (stage page goes back to wherever you came from). Lesson progress bar; step nav sticks to the bottom.
 - 猜: typed guess is checked against the real output (✔/✗) and the matching grade is highlighted. 📋 copy-to-AI on 抄 errors,
   every 改 prompt, every 猜 card and every failed 默写 (asks for a hint, not the answer).
 - Course map (`syllabus.json`): all 6 stages and planned lessons; unpublished ones show 「制作中」.

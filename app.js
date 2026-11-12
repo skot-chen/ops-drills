@@ -279,7 +279,7 @@ function viewHome() {
     const pub = DATA.lessons.filter((x) => x.stage === s.stage);
     const tot = pub.reduce((n, x) => n + x.blocks.length, 0);
     const done = pub.reduce((n, x) => n + lessonProgress(x).done, 0);
-    ov.append(h(`<a class="card stagecard" href="#/lessons"><div class="row"><b>阶段 ${s.stage} · ${esc(s.title)}</b><span class="spacer"></span><span class="muted">${pub.length}/${s.lessons.length} 课已上线</span></div>
+    ov.append(h(`<a class="card stagecard" href="#/stage/${s.stage}"><div class="row"><b>阶段 ${s.stage} · ${esc(s.title)}</b><span class="spacer"></span><span class="muted">${pub.length}/${s.lessons.length} 课已上线</span></div>
       ${bar(tot ? (100 * done) / tot : 0)}<div class="muted small">${tot ? `学完 ${done}/${tot} 块` : "还没上线：前面的课学完就会做出来"}</div></a>`));
   }
   const bd = el.querySelector(".badges");
@@ -303,22 +303,55 @@ function daySummary() {
   ].join("\n");
 }
 
-/* ---------------- courses ---------------- */
+/* ---------------- courses: 课程 → 阶段 → 课 → 小块 ---------------- */
+function stageStats(s) {
+  const pub = DATA.lessons.filter((x) => x.stage === s.stage);
+  const total = pub.reduce((n, x) => n + x.blocks.length, 0);
+  const done = pub.reduce((n, x) => n + lessonProgress(x).done, 0);
+  return { pub, total, done };
+}
+function lessonList(s) {
+  const ul = h(`<ul class="lessons"></ul>`);
+  for (const it of s.lessons) {
+    const L = DATA.lessons.find((x) => x.id === it.id);
+    if (L) {
+      const p = lessonProgress(L);
+      ul.append(h(`<li><a href="#/l/${L.id}"><span class="lid">${esc(L.id)}</span><span class="t">${esc(L.title)}</span><span class="spacer"></span><span class="muted">${p.done === p.total ? "✅" : `${p.done}/${p.total}`}</span><span class="go">›</span></a>${bar((100 * p.done) / p.total)}</li>`));
+    } else ul.append(h(`<li class="soon"><span class="lid">${esc(it.id)}</span><span class="t">${esc(it.title)}</span><span class="spacer"></span><span class="pill">制作中</span></li>`));
+  }
+  return ul;
+}
+
 function viewLessons() {
   const el = h(`<div><h1>课程</h1>
-    <div class="card body note-card">${md("课程按 6 个阶段排好了。**课会一课一课地上线**：你学完一课、「讲」完给 AI 检查，AI 就把下一课做好放上来，这样每课都根据你上一课的情况来调整。灰色的是还没上线的。")}</div></div>`);
+    <div class="card body note-card">${md("课程分 6 个阶段。点一个阶段看里面的课。**课会一课一课地上线**：你学完一课、「讲」完给 AI 检查，AI 就把下一课做好放上来。灰色的是还没上线的。")}</div></div>`);
   for (const s of DATA.syllabus) {
-    const card = h(`<div class="card"><div class="stage">阶段 ${s.stage}</div><h2 class="stitle">${esc(s.title)}</h2>${s.goal ? `<div class="muted small">目标：${esc(s.goal)}</div>` : ""}<ul class="lessons"></ul></div>`);
-    const ul = card.querySelector("ul");
-    for (const it of s.lessons) {
-      const L = DATA.lessons.find((x) => x.id === it.id);
-      if (L) {
-        const p = lessonProgress(L);
-        ul.append(h(`<li><a href="#/l/${L.id}"><span class="lid">${esc(L.id)}</span><span class="t">${esc(L.title)}</span><span class="spacer"></span><span class="muted">${p.done === p.total ? "✅" : `${p.done}/${p.total}`}</span></a>${bar((100 * p.done) / p.total)}</li>`));
-      } else ul.append(h(`<li class="soon"><span class="lid">${esc(it.id)}</span><span class="t">${esc(it.title)}</span><span class="spacer"></span><span class="pill">制作中</span></li>`));
-    }
-    el.append(card);
+    const st = stageStats(s);
+    el.append(h(`<a class="card stagecard" href="#/stage/${s.stage}"><div class="row"><span class="stage">阶段 ${s.stage}</span><span class="spacer"></span><span class="muted small">${st.pub.length}/${s.lessons.length} 课已上线</span><span class="go">›</span></div>
+      <b>${esc(s.title)}</b>${bar(st.total ? (100 * st.done) / st.total : 0)}<div class="muted small">${st.total ? `学完 ${st.done}/${st.total} 块` : "还没上线：前面的课学完就会做出来"}</div></a>`));
   }
+  $app.replaceChildren(el);
+}
+
+function viewStage(s) {
+  const st = stageStats(s);
+  const i = DATA.syllabus.indexOf(s);
+  const prev = DATA.syllabus[i - 1], next = DATA.syllabus[i + 1];
+  const from = cameFrom === "home" ? ["#/", "今天"] : ["#/lessons", "全部阶段"];
+  const el = h(`<div></div>`);
+  el.append(backBar(from[0], from[1]));
+  el.append(h(`<div><div class="stage">阶段 ${s.stage} / ${DATA.syllabus.length}</div><h1 style="margin-top:0">${esc(s.title)}</h1>
+    ${s.goal ? `<div class="card body note-card"><b>学完能做到：</b>${esc(s.goal)}</div>` : ""}
+    <div class="row muted small"><span>${st.total ? `本阶段学完 ${st.done}/${st.total} 块` : "本阶段还没有上线的课"}</span><span class="spacer"></span><span>${st.pub.length}/${s.lessons.length} 课已上线</span></div>
+    ${bar(st.total ? (100 * st.done) / st.total : 0)}</div>`));
+  const card = h(`<div class="card"><h2 style="margin-top:0">课</h2></div>`);
+  card.append(lessonList(s));
+  el.append(card);
+  const nav = h(`<div class="row"></div>`);
+  if (prev) nav.append(h(`<a class="btn" href="#/stage/${prev.stage}">← 阶段 ${prev.stage}</a>`));
+  nav.append(h(`<span class="spacer"></span>`));
+  if (next) nav.append(h(`<a class="btn" href="#/stage/${next.stage}">阶段 ${next.stage} →</a>`));
+  el.append(nav);
   $app.replaceChildren(el);
 }
 
@@ -338,7 +371,7 @@ function resourcesCard(L) {
 function viewLesson(L) {
   const p = lessonProgress(L);
   const el = h(`<div></div>`);
-  el.append(backBar("#/lessons", "课程列表"));
+  el.append(backBar(`#/stage/${L.stage}`, `阶段 ${L.stage}`));
   el.append(h(`<div><h1>${esc(L.id)} · ${esc(L.title)}</h1>
     <div class="row muted small"><span>本课进度 ${p.done}/${p.total} 块</span></div>${bar((100 * p.done) / p.total)}
     ${L.intro ? `<div class="card body">${md(L.intro)}</div>` : ""}
@@ -675,14 +708,23 @@ function backfill() {
 }
 
 /* ---------------- router ---------------- */
+// Where the user came from, so a stage page knows whether "back" means 今天 or 课程.
+let cameFrom = "lessons";
+let lastTop = "home";
 function route() {
   const raw = location.hash.replace(/#say$/, "");
   const parts = raw.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const nav = parts[0] === "l" ? "lessons" : parts[0] || "home";
+  const nav = parts[0] === "l" || parts[0] === "stage" ? "lessons" : parts[0] || "home";
   document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === nav));
   updateHeader();
-  if (!parts.length) return viewHome();
-  if (parts[0] === "lessons") return viewLessons();
+  if (!parts.length) { lastTop = "home"; return viewHome(); }
+  if (parts[0] === "lessons") { lastTop = "lessons"; return viewLessons(); }
+  if (parts[0] === "stage") {
+    const s = DATA.syllabus.find((x) => x.stage === Number(parts[1]));
+    if (!s) return viewLessons();
+    cameFrom = lastTop;
+    return viewStage(s);
+  }
   if (parts[0] === "review") return viewReview();
   if (parts[0] === "stars") return viewStars();
   if (parts[0] === "settings") return viewSettings();
