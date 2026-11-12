@@ -62,3 +62,25 @@ test("blockSteps needs every step", () => {
   st.srs["L.b1.d1"] = { box: 1, due: "x" };
   assert.equal(blockSteps(block, st).done, true);
 });
+
+import { streak, levelOf, guessMatches } from "../core.js";
+
+test("streak counts back from today, or from yesterday if today is empty", () => {
+  assert.equal(streak(["2026-11-09", "2026-11-10", "2026-11-11"], "2026-11-11"), 3);
+  assert.equal(streak(["2026-11-09", "2026-11-10"], "2026-11-11"), 2);
+  assert.equal(streak(["2026-11-08", "2026-11-10"], "2026-11-11"), 1);
+  assert.equal(streak(["2026-11-01"], "2026-11-11"), 0);
+  assert.equal(streak(["2026-11-30", "2026-12-01"], "2026-12-01"), 2);
+});
+
+test("levelOf: thresholds and progress to next level", () => {
+  assert.deepEqual([levelOf(0).lv, levelOf(0).name, levelOf(0).pct], [1, "新手", 0]);
+  assert.deepEqual([levelOf(175).lv, levelOf(175).pct], [2, 50]);
+  assert.equal(levelOf(99999).next, null);
+});
+
+test("guessMatches is forgiving about spaces, strict about content", () => {
+  assert.ok(guessMatches("  0 a\n1 b \n", "0 a\n1 b"));
+  assert.ok(!guessMatches("", ""));
+  assert.ok(!guessMatches("0 a", "0 a\n1 b"));
+});

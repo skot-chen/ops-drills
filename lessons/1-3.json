@@ -1,0 +1,189 @@
+{
+ "id": "1-3",
+ "stage": 1,
+ "title": "函数和测试：让脚本可以放心改",
+ "intro": "脚本越写越长，改一处就怕别处坏掉。这一课学两件事：\n\n1. **函数**：把一件小事包起来、起个名字，到处都能用。\n2. **测试**：用几行代码自动检查函数对不对。改完跑一遍，绿了才放心。",
+ "questions": [
+  "为什么要把代码拆成函数，而不是一长串从上到下的脚本？",
+  "真实场景里，你改了一个解析日志的脚本，怎么确认没把以前能处理的情况改坏？",
+  "测试全部通过，就说明代码一定没问题吗？为什么？"
+ ],
+ "resources": [
+  {
+   "kind": "video",
+   "title": "Functions",
+   "url": "https://www.youtube.com/watch?v=9Os0o3wzS_I",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应 def / return / 默认参数"
+  },
+  {
+   "kind": "video",
+   "title": "Pytest Tutorial – How to Test Python Code",
+   "url": "https://www.youtube.com/watch?v=cHYq1MRoyI0",
+   "source": "YouTube · freeCodeCamp.org",
+   "note": "pytest 完整入门"
+  },
+  {
+   "kind": "video",
+   "title": "How To Write Unit Tests in Python • Pytest Tutorial",
+   "url": "https://www.youtube.com/watch?v=YbpKMIUjvK8",
+   "source": "YouTube · pixegami",
+   "note": "短一些的版本"
+  },
+  {
+   "kind": "doc",
+   "title": "pytest 官方：Get Started",
+   "url": "https://docs.pytest.org/en/stable/getting-started.html",
+   "source": "docs.pytest.org",
+   "note": ""
+  },
+  {
+   "kind": "case",
+   "title": "pytest 源码仓库（看真实项目的 tests/ 目录）",
+   "url": "https://github.com/pytest-dev/pytest",
+   "source": "GitHub · pytest-dev/pytest",
+   "note": ""
+  },
+  {
+   "kind": "community",
+   "title": "r/learnpython 新手常见问题（Wiki）",
+   "url": "https://www.reddit.com/r/learnpython/wiki/index/",
+   "source": "Reddit",
+   "note": "卡住时先在这里搜，很多人问过同样的问题"
+  }
+ ],
+ "blocks": [
+  {
+   "id": "b1",
+   "title": "def 和 return",
+   "body": "```\ndef 函数名(参数):\n    做事情\n    return 结果\n```\n\n- `def` 定义函数，冒号后面的内容要缩进。\n- `return` 把结果**交回去**，调用的地方才能拿到。\n- 没写 `return` 的函数，结果是 `None`。\n\n`print` 是「显示给人看」，`return` 是「交给程序用」——这是新手最容易混的地方。",
+   "example": "def get_level(line):\n    parts = line.split(\" \")\n    return parts[2]\n\nprint(get_level(\"2026-11-10 09:40:01 ERROR db: timeout\"))\nprint(get_level(\"2026-11-10 09:40:02 INFO gateway: ok\"))",
+   "tweaks": [
+    {
+     "ask": "把 `return parts[2]` 改成 `print(parts[2])`，先猜输出有几行？",
+     "answer": "4 行：函数里自己打印一次级别，外面的 `print` 再打印一次函数结果——没有 `return`，结果是 `None`。所以输出是 `ERROR`、`None`、`INFO`、`None`。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "def add(a, b):\n    a + b\n\nprint(add(1, 2))",
+     "explain": "算了但没 `return`，结果是 `None`。"
+    },
+    {
+     "id": "q2",
+     "code": "def f():\n    return 1\n    print(\"after\")\n\nprint(f())",
+     "explain": "`return` 之后函数就结束了，下面那行不会执行。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "写一个函数 `is_error(line)`：级别是 `ERROR` 或 `FATAL` 时返回 `True`，否则 `False`。然后打印这 3 行的结果：\n\n```\n2026-11-10 09:40:01 ERROR db: timeout\n2026-11-10 09:40:02 INFO gateway: ok\n2026-11-10 09:40:03 FATAL db: too many connections\n```\n\n期望输出：\n\n```\nTrue\nFalse\nTrue\n```",
+     "hints": [
+      "级别是 `line.split(\" \")[2]`",
+      "`return level == \"ERROR\" or level == \"FATAL\"`，也可以写 `level in (\"ERROR\", \"FATAL\")`"
+     ],
+     "solution": "def is_error(line):\n    level = line.split(\" \")[2]\n    return level in (\"ERROR\", \"FATAL\")\n\nprint(is_error(\"2026-11-10 09:40:01 ERROR db: timeout\"))\nprint(is_error(\"2026-11-10 09:40:02 INFO gateway: ok\"))\nprint(is_error(\"2026-11-10 09:40:03 FATAL db: too many connections\"))"
+    }
+   ]
+  },
+  {
+   "id": "b2",
+   "title": "参数默认值",
+   "body": "参数可以有**默认值**：调用时不写就用默认的。\n\n```\ndef count_level(lines, level=\"ERROR\"):\n```\n\n- `count_level(lines)` → 数 ERROR\n- `count_level(lines, \"WARN\")` → 数 WARN\n- `count_level(lines, level=\"WARN\")` → 写上名字更清楚\n\n好的函数：**一件事、名字说清楚做什么、需要的东西都从参数进来**。",
+   "example": "def count_level(lines, level=\"ERROR\"):\n    n = 0\n    for line in lines:\n        if line.split(\" \")[2] == level:\n            n = n + 1\n    return n\n\nlogs = [\n    \"2026-11-10 09:40:01 ERROR db: timeout\",\n    \"2026-11-10 09:40:02 WARN gateway: slow\",\n    \"2026-11-10 09:40:03 ERROR db: timeout\",\n]\nprint(count_level(logs))\nprint(count_level(logs, \"WARN\"))\nprint(count_level(logs, level=\"INFO\"))",
+   "tweaks": [
+    {
+     "ask": "调用 `count_level(logs, \"error\")`（小写），先猜结果。",
+     "answer": "`0`：字符串比较区分大小写。想不区分，可以比较前都 `.upper()`。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "def greet(name, times=2):\n    return name * times\n\nprint(greet(\"ab\"))\nprint(greet(\"ab\", 3))",
+     "explain": "字符串 × 数字 = 重复。不写 `times` 就用默认的 2。"
+    },
+    {
+     "id": "q2",
+     "code": "def f(a, b=1):\n    return a + b\n\nprint(f(b=5, a=2))",
+     "explain": "写上参数名时，顺序可以随便。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "写函数 `to_ms(text)`：把 `\"3s\"` 变成 `3000`，把 `\"250ms\"` 变成 `250`（返回数字）。打印：\n\n```\n3000\n250\n3250\n```\n\n（第 3 行是 `to_ms(\"3s\") + to_ms(\"250ms\")`）",
+     "hints": [
+      "先判断 `text.endswith(\"ms\")`——要先判断 ms，因为 `\"250ms\"` 也以 s 结尾",
+      "`int(text[:-2])` 去掉最后 2 个字符",
+      "秒：`int(text[:-1]) * 1000`"
+     ],
+     "solution": "def to_ms(text):\n    if text.endswith(\"ms\"):\n        return int(text[:-2])\n    return int(text[:-1]) * 1000\n\nprint(to_ms(\"3s\"))\nprint(to_ms(\"250ms\"))\nprint(to_ms(\"3s\") + to_ms(\"250ms\"))"
+    }
+   ]
+  },
+  {
+   "id": "b3",
+   "title": "assert：最简单的测试",
+   "body": "`assert 条件` 的意思是「我断定这个条件成立」。成立就什么都不发生；不成立就报 `AssertionError`，程序停下。\n\n```\nassert to_ms(\"3s\") == 3000\nassert to_ms(\"250ms\") == 250\n```\n\n这就是**测试**：把「输入 → 应该得到的结果」写下来，交给程序自动检查。以后改了函数，再跑一遍，马上知道有没有改坏。\n\n后面可以带一句说明：`assert x == 3, \"x 应该是 3\"`，失败时会显示这句话。",
+   "example": "import re\n\ndef mask_ip(s):\n    return re.sub(r\"\\d+\\.\\d+\\.\\d+\\.\\d+\", \"<IP>\", s)\n\nassert mask_ip(\"to 10.0.3.12\") == \"to <IP>\"\nassert mask_ip(\"no ip here\") == \"no ip here\"\nassert mask_ip(\"a 1.2.3.4 b 5.6.7.8\") == \"a <IP> b <IP>\"\nprint(\"3 个测试全部通过\")",
+   "tweaks": [
+    {
+     "ask": "故意把第一个 assert 的期望改错（比如 `\"to IP\"`），先猜会看到什么？",
+     "answer": "程序在那一行停下，报 `AssertionError`，最后的 print 不会执行。**测试失败是好事**：它在用户发现之前，先告诉你哪里不对。"
+    },
+    {
+     "ask": "`re.sub` 是新出现的：它和 `re.findall` 有什么不同？",
+     "answer": "`findall` 是「找出来」，`sub` 是「找到后替换掉」。把 IP 换成 `<IP>`，正是日志模板化的第一步（后面阶段 4 会用到）。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "assert 1 + 1 == 2\nprint(\"ok\")",
+     "explain": "条件成立，assert 什么都不做。"
+    },
+    {
+     "id": "q2",
+     "code": "x = 2\nassert x == 3, \"x 应该是 3\"\nprint(\"done\")",
+     "explain": "条件不成立：抛出 `AssertionError`，带着你写的那句说明，下面的 print 不执行。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "写函数 `service_of(line)`，返回日志行里的服务名（去掉冒号）。再写 **3 个 assert** 测它，全部通过后打印：\n\n```\n全部通过\n```\n\n可以用这些行来测：`\"2026-11-10 09:40:01 ERROR payment-svc: timeout\"` → `\"payment-svc\"`。",
+     "hints": [
+      "服务名是 `line.split(\" \")[3]`，再 `.rstrip(\":\")`",
+      "`assert service_of(\"...\") == \"payment-svc\"`",
+      "3 个 assert 用 3 行不同的日志"
+     ],
+     "solution": "def service_of(line):\n    return line.split(\" \")[3].rstrip(\":\")\n\nassert service_of(\"2026-11-10 09:40:01 ERROR payment-svc: timeout\") == \"payment-svc\"\nassert service_of(\"2026-11-10 09:40:02 INFO gateway: ok\") == \"gateway\"\nassert service_of(\"2026-11-10 09:40:03 FATAL db: down\") == \"db\"\nprint(\"全部通过\")"
+    }
+   ]
+  },
+  {
+   "id": "b4",
+   "title": "pytest：真实项目怎么跑测试",
+   "lang": "text",
+   "body": "真实项目里，测试放在单独的文件里，文件名以 `test_` 开头，用 **pytest** 一次全部跑完。\n\n- 每个测试是一个 `test_` 开头的函数，里面写 `assert`\n- 在终端运行 `pytest -q`\n- 每个通过的测试显示一个 `.`，失败的显示 `F`\n\n浏览器里没法装 pytest，这一块**只看不运行**。想亲手试：在 GitHub 的 Codespaces 或自己电脑上 `pip install pytest`，照下面建两个文件，运行 `pytest -q`。",
+   "example": "# 文件 logtools.py\ndef is_error(line):\n    return line.split(\" \")[2] in (\"ERROR\", \"FATAL\")\n\n# 文件 test_logtools.py\nfrom logtools import is_error\n\ndef test_error_line():\n    assert is_error(\"2026-11-10 09:40:01 ERROR db: x\")\n\ndef test_info_line():\n    assert not is_error(\"2026-11-10 09:40:01 INFO db: x\")\n\n# 终端里：\n$ pytest -q\n..                                   [100%]\n2 passed in 0.01s",
+   "tweaks": [
+    {
+     "ask": "如果把 `is_error` 改成只认 `ERROR`、不认 `FATAL`，现有的两个测试会发现吗？",
+     "answer": "不会：两个测试都没用到 FATAL。测试只能发现你**写到了**的情况。所以要给容易出错的地方（边界、特殊值）专门加测试，比如加一个 `test_fatal_line`。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "# 有 3 个测试，第 2 个失败了\n$ pytest -q",
+     "answer": ".F.\n1 failed, 2 passed",
+     "explain": "通过是 `.`，失败是 `F`，按顺序排。最后一行是汇总（真实输出还会打印失败的详细原因）。"
+    }
+   ]
+  }
+ ]
+}

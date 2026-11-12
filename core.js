@@ -174,3 +174,34 @@ export function blockSteps(block, st) {
   const drill = block.drills.length > 0 && block.drills.every((d) => (st.srs[d.id]?.box || 0) > 0);
   return { copy, tweak, quiz, drill, done: copy && tweak && (quiz || !block.quiz.length) && (drill || !block.drills.length) };
 }
+
+/**
+ * Consecutive active days ending today (or yesterday, so the streak isn't "lost" before you study today).
+ * @param {string[]} days  YYYY-MM-DD keys with any activity
+ * @param {string} today
+ */
+export function streak(days, today) {
+  const set = new Set(days);
+  let d = set.has(today) ? today : addDays(today, -1);
+  let n = 0;
+  while (set.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+
+/** XP needed for each level and its name. */
+export const LEVELS = [[0, "新手"], [100, "入门"], [250, "上手"], [500, "熟练"], [900, "进阶"], [1400, "能手"], [2000, "高手"], [3000, "大师"]];
+
+/** @param {number} xp */
+export function levelOf(xp) {
+  let i = 0;
+  while (i + 1 < LEVELS.length && xp >= /** @type {number} */ (LEVELS[i + 1][0])) i++;
+  const cur = /** @type {number} */ (LEVELS[i][0]);
+  const next = i + 1 < LEVELS.length ? /** @type {number} */ (LEVELS[i + 1][0]) : null;
+  return { lv: i + 1, name: /** @type {string} */ (LEVELS[i][1]), cur, next, pct: next ? Math.round((100 * (xp - cur)) / (next - cur)) : 100 };
+}
+
+/** Does a typed guess match the real output? Ignores outer blank lines, line-end spaces, and spaces at line starts. @param {string} guess @param {string} answer */
+export function guessMatches(guess, answer) {
+  const n = (/** @type {string} */ s) => normOut(s).split("\n").map((l) => l.trim()).join("\n").trim();
+  return n(guess) !== "" && n(guess) === n(answer);
+}

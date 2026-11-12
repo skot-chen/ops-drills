@@ -2,7 +2,7 @@
  "id": "1-1",
  "stage": 1,
  "title": "用 Python 统计日志",
- "intro": "\n以前你会这样查：`grep ERROR app.log | awk '{print $4}' | sort | uniq -c | sort -rn`。\n这一课用 Python 做同样的事，并且处理好「脏数据」。这是 AIOps 的第一步：**把手工查日志变成程序**。\n数据都是 `samples/demo.log`（约 4300 行，09:40 左右有一次故障）。\n",
+ "intro": "\n用命令行通常这样查：`grep ERROR app.log | awk '{print $4}' | sort | uniq -c | sort -rn`。\n这一课用 Python 做同样的事，并且处理好「脏数据」。这是 AIOps 的第一步：**把手工查日志变成程序**。\n数据都是 `samples/demo.log`（约 4300 行，09:40 左右有一次故障）。\n",
  "questions": [
   "for line in f 和「把整个文件一次读进来」相比，好在哪里？如果日志有 10GB，会有什么区别？",
   "日志里那行看不懂的乱码，如果不跳过，脚本会出什么问题？真实环境里还可能有哪些「脏数据」？",
@@ -142,6 +142,43 @@
    "files": [
     "samples/demo.log"
    ]
+  }
+ ],
+ "resources": [
+  {
+   "kind": "video",
+   "title": "File Objects - Reading and Writing to Files",
+   "url": "https://www.youtube.com/watch?v=Uh2ebFW8OYM",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应 with open / for line in f"
+  },
+  {
+   "kind": "video",
+   "title": "Dictionaries - Working with Key-Value Pairs",
+   "url": "https://www.youtube.com/watch?v=daefaLgNkw0",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应按服务计数"
+  },
+  {
+   "kind": "doc",
+   "title": "collections.Counter 官方文档",
+   "url": "https://docs.python.org/3/library/collections.html",
+   "source": "docs.python.org",
+   "note": "计数的现成工具，学完本课再看"
+  },
+  {
+   "kind": "case",
+   "title": "Loghub：真实系统日志数据集（HDFS 等）",
+   "url": "https://github.com/logpai/loghub/tree/master/HDFS",
+   "source": "GitHub · logpai/loghub",
+   "note": "拿真实日志练手：把本课脚本跑在 HDFS 样例上"
+  },
+  {
+   "kind": "community",
+   "title": "r/sysadmin",
+   "url": "https://www.reddit.com/r/sysadmin/",
+   "source": "Reddit",
+   "note": "搜 python log 能看到别人怎么用脚本处理日志"
   }
  ]
 }

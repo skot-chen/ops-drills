@@ -1,0 +1,222 @@
+{
+ "id": "1-2",
+ "stage": 1,
+ "title": "正则表达式：从日志里抽字段",
+ "intro": "上一课用 `split` 切日志，格式一变就容易切错。这一课学**正则表达式**：描述「我要找的东西长什么样」，比如「一串数字后面跟 ms」「四段数字中间用点隔开」。\n用命令行时 `grep -E` 用的就是正则，Python 里用 `re` 模块。",
+ "questions": [
+  "为什么正则前面要写 r\"...\"？不写 r 可能出什么问题？",
+  "真实场景里，日志格式经常会变（比如中间多了一个字段）。你的正则怎么写才不容易坏？",
+  "什么时候用 split 就够了，什么时候必须用正则？各举一个例子。"
+ ],
+ "resources": [
+  {
+   "kind": "video",
+   "title": "re Module - How to Write and Match Regular Expressions",
+   "url": "https://www.youtube.com/watch?v=K8L6KVGG-7o",
+   "source": "YouTube · Corey Schafer",
+   "note": "本课主视频"
+  },
+  {
+   "kind": "video",
+   "title": "Regular Expressions (Regex) Tutorial: How to Match Any Pattern of Text",
+   "url": "https://www.youtube.com/watch?v=sa-TUpSx1JA",
+   "source": "YouTube · Corey Schafer",
+   "note": "不限语言的正则基础"
+  },
+  {
+   "kind": "doc",
+   "title": "regex101：在线试正则（选 Python）",
+   "url": "https://regex101.com/",
+   "source": "regex101.com",
+   "note": "把日志贴进去，边写边看哪里匹配上"
+  },
+  {
+   "kind": "doc",
+   "title": "Python 官方正则 HOWTO",
+   "url": "https://docs.python.org/3/howto/regex.html",
+   "source": "docs.python.org",
+   "note": ""
+  },
+  {
+   "kind": "case",
+   "title": "logparser：日志解析工具箱（学术界常用）",
+   "url": "https://github.com/logpai/logparser",
+   "source": "GitHub · logpai/logparser",
+   "note": "看别人怎么用正则 + 算法把日志变成模板"
+  },
+  {
+   "kind": "community",
+   "title": "r/learnpython 新手常见问题（Wiki）",
+   "url": "https://www.reddit.com/r/learnpython/wiki/index/",
+   "source": "Reddit",
+   "note": "卡住时先在这里搜，很多人问过同样的问题"
+  }
+ ],
+ "blocks": [
+  {
+   "id": "b1",
+   "title": "re.search：找第一个",
+   "body": "正则就是「描述长相」：\n\n| 写法 | 意思 | 命令行对应 |\n|---|---|---|\n| `\\d` | 一个数字 | `[0-9]` |\n| `+` | 前面的东西出现 1 次或多次 | 同 `grep -E` |\n| `.` | 任意一个字符 | 同 |\n| `\\s` | 空白（空格、Tab） | `[[:space:]]` |\n| `\\.` | 真正的点 | 同 |\n\n`re.search(正则, 文本)` 从左往右找，**找到第一个就停**。找到了返回一个「匹配对象」，用 `.group()` 拿出文字；找不到返回 `None`。\n\n正则前面加 `r`（`r\"\\d+\"`），让 Python 不去动里面的反斜杠。",
+   "example": "import re\nline = \"2026-11-10 09:40:01 ERROR payment-svc: connection timeout to db 10.0.3.12:5432 after 3000ms\"\nm = re.search(r\"\\d+ms\", line)\nprint(m.group())",
+   "tweaks": [
+    {
+     "ask": "把 `\\d+ms` 改成 `\\d+`，先猜会找到哪个数字？",
+     "answer": "会找到 `2026`：`search` 从左往右，第一个「一串数字」就是日期里的年份。所以正则要写得**够具体**（后面带上 `ms`），才能找到你要的那个。"
+    },
+    {
+     "ask": "把 `\\d+ms` 改成 `\\d+s`，先猜结果。",
+     "answer": "会报错 `AttributeError`。`\\d+s` 要「数字后面**紧跟** s」，但 `3000ms` 中间隔着 m，整行都找不到，`m` 是 `None`，`None` 没有 `.group()`。真实脚本里要先判断 `if m:` 再用。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "import re\nm = re.search(r\"\\d+\", \"pool=39 port=5432\")\nprint(m.group())",
+     "explain": "找到第一个就停：39 在 5432 前面。"
+    },
+    {
+     "id": "q2",
+     "code": "import re\nprint(re.search(r\"timeout\", \"connection refused\"))",
+     "explain": "找不到时返回 `None`，不是空字符串，也不报错。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "下面这行日志，用 `re.search` 找出耗时（数字 + ms）并打印：\n\n```\n2026-11-10 09:40:05 ERROR gateway: POST /api/pay 502 87ms upstream=payment-svc\n```\n\n期望输出：\n\n```\n87ms\n```",
+     "hints": [
+      "先 `import re`，把这行日志放进一个变量",
+      "正则是 `r\"\\d+ms\"`，结果用 `.group()` 拿"
+     ],
+     "solution": "import re\nline = \"2026-11-10 09:40:05 ERROR gateway: POST /api/pay 502 87ms upstream=payment-svc\"\nm = re.search(r\"\\d+ms\", line)\nprint(m.group())"
+    }
+   ]
+  },
+  {
+   "id": "b2",
+   "title": "re.findall：找全部",
+   "body": "`re.findall(正则, 文本)` 把**所有**匹配都找出来，返回一个列表。\n\n找 IP 地址：四段数字，中间是**真正的点**：\n\n```\n\\d+\\.\\d+\\.\\d+\\.\\d+\n```\n\n注意 `.` 在正则里是「任意字符」，要写成 `\\.` 才是点。\n\n如果正则里有**括号**，`findall` 只返回括号里的部分——这正好用来「只要数字，不要前缀」。",
+   "example": "import re\ntext = \"from 10.0.3.12 to 10.0.3.15, retry 10.0.3.12\"\nips = re.findall(r\"\\d+\\.\\d+\\.\\d+\\.\\d+\", text)\nprint(ips)\nprint(len(ips), \"个\")\nprint(len(set(ips)), \"个不同的\")",
+   "tweaks": [
+    {
+     "ask": "把正则里的 `\\.` 都换成 `.`，再加一句 `print(re.findall(r\"\\d+.\\d+\", \"v1x2 and 3.4\"))`，先猜第二行输出。",
+     "answer": "`['1x2', '3.4']`：没转义的点能匹配任意字符，连 `x` 也算。抽 IP、版本号时一定写 `\\.`。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "import re\nprint(re.findall(r\"port=(\\d+)\", \"port=80 port=443\"))",
+     "explain": "有括号时只返回括号里的部分，而且是**字符串**，不是数字。"
+    },
+    {
+     "id": "q2",
+     "code": "import re\nprint(re.findall(r\"\\d+\", \"no numbers here\"))",
+     "explain": "找不到时 `findall` 返回空列表 `[]`（不像 `search` 返回 `None`）。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "数一数 `samples/demo.log` 里有多少行**包含 IP 地址**，打印：\n\n```\n含 IP 的行：357\n```",
+     "hints": [
+      "一行一行读：`for line in f:`",
+      "`if re.search(IP正则, line):` 就加 1",
+      "IP 正则：`r\"\\d+\\.\\d+\\.\\d+\\.\\d+\"`"
+     ],
+     "solution": "import re\nn = 0\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        if re.search(r\"\\d+\\.\\d+\\.\\d+\\.\\d+\", line):\n            n = n + 1\nprint(f\"含 IP 的行：{n}\")",
+     "files": [
+      "samples/demo.log"
+     ]
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  },
+  {
+   "id": "b3",
+   "title": "分组：一次抽出好几个字段",
+   "body": "用**括号**把想要的部分圈起来，一次抽出时间、级别、服务、消息：\n\n```\n^(\\S+ \\S+) (\\w+) ([\\w-]+): (.*)$\n  时间        级别   服务        消息\n```\n\n| 写法 | 意思 |\n|---|---|\n| `^` / `$` | 行首 / 行尾 |\n| `\\S+` | 一串不是空白的字符 |\n| `\\w+` | 一串字母数字下划线 |\n| `[\\w-]+` | 字母数字下划线**或减号**（服务名 `payment-svc` 里有减号） |\n| `(.*)` | 剩下的全部 |\n\n`m.group(1)` 是第 1 个括号，`m.groups()` 一次拿全部。`re.match` 只从**开头**匹配，`re.search` 可以在中间找。",
+   "example": "import re\nline = \"2026-11-10 09:40:01 ERROR payment-svc: connection timeout to db 10.0.3.12:5432 after 3000ms\"\nm = re.match(r\"^(\\S+ \\S+) (\\w+) ([\\w-]+): (.*)$\", line)\nprint(m.group(2))\nprint(m.group(3))\nts, level, svc, msg = m.groups()\nprint(ts, \"|\", msg)",
+   "tweaks": [
+    {
+     "ask": "把 `[\\w-]+` 改成 `\\w+`，先猜 `m` 会是什么？",
+     "answer": "`\\w` 不包含减号，`payment-svc` 匹配不上 `服务名:` 这个结构，整行失败，`m` 是 `None`，下一行 `.group` 报错。服务名、主机名里常有 `-`，要记得加上。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "import re\nm = re.match(r\"(\\w+)-(\\d+)\", \"web-01\")\nprint(m.group(1), m.group(2))",
+     "explain": "第 1 组是 `web`，第 2 组是 `01`——注意 `01` 是字符串，前面的 0 还在。"
+    },
+    {
+     "id": "q2",
+     "code": "import re\nprint(re.match(r\"\\d+\", \"id 42\"))",
+     "explain": "`match` 只看**开头**：开头是 `i` 不是数字，所以 `None`。想在中间找用 `search`。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "用分组，打印 `samples/demo.log` **前 3 行**的服务名：\n\n```\norder-svc\npayment-svc\ngateway\n```",
+     "hints": [
+      "用 `enumerate(f)`，`i >= 3` 就 `break`",
+      "正则可以只写到服务名：`r\"^\\S+ \\S+ \\w+ ([\\w-]+):\"`",
+      "打印 `m.group(1)`"
+     ],
+     "solution": "import re\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for i, line in enumerate(f):\n        if i >= 3:\n            break\n        m = re.match(r\"^\\S+ \\S+ \\w+ ([\\w-]+):\", line)\n        print(m.group(1))",
+     "files": [
+      "samples/demo.log"
+     ]
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  },
+  {
+   "id": "b4",
+   "title": "抽出数字来算：最慢的一次请求",
+   "body": "正则抽出来的都是**字符串**，要比大小、求和，先用 `int()` 变成数字。\n\n思路（和 `grep | awk | sort -n | tail -1` 一样）：\n\n1. 只看 gateway 的行\n2. 用 `(\\d+)ms` 抽出耗时\n3. `int()` 后放进列表\n4. `max()` 找最大\n\n抽不到的行（`m` 是 `None`）要跳过。",
+   "example": "import re\nlines = [\n    \"09:00:01 INFO gateway: GET /api/orders/1 200 154ms\",\n    \"09:00:02 INFO gateway: POST /api/pay 200 31ms\",\n    \"09:00:03 WARN gateway: slow request GET /api/orders/9 1890ms\",\n    \"09:00:04 INFO db: checkpoint complete\",\n]\ncosts = []\nfor line in lines:\n    m = re.search(r\" (\\d+)ms\", line)\n    if m:\n        costs.append(int(m.group(1)))\nprint(costs)\nprint(\"最慢\", max(costs), \"ms\")",
+   "tweaks": [
+    {
+     "ask": "去掉 `int(...)`，直接 `costs.append(m.group(1))`，先猜 `max` 会给出什么？",
+     "answer": "`'31'`：字符串按**字典顺序**比，`'3' > '1'`，所以 `'31'` 比 `'1890'` 大。数字一定要先 `int()`，这是排查脚本里很常见的坑。"
+    }
+   ],
+   "quiz": [
+    {
+     "id": "q1",
+     "code": "print(max([\"9\", \"10\", \"100\"]))",
+     "explain": "字符串比的是第一个字符：`'9'` 最大。"
+    },
+    {
+     "id": "q2",
+     "code": "import re\nm = re.search(r\"(\\d+)ms\", \"took 87ms\")\nprint(m.group(1) + 1)",
+     "explain": "`group(1)` 是字符串 `'87'`，不能和数字 1 相加，要写 `int(m.group(1)) + 1`。"
+    }
+   ],
+   "drills": [
+    {
+     "id": "d1",
+     "task": "在 `samples/demo.log` 里，找出 **gateway** 服务最慢的一次耗时，打印：\n\n```\ngateway 最慢 2491ms\n```",
+     "hints": [
+      "`if \" gateway: \" not in line: continue`",
+      "`m = re.search(r\" (\\d+)ms\", line)`，`if m:` 再 `int(...)`",
+      "最后 `print(f\"gateway 最慢 {max(costs)}ms\")`"
+     ],
+     "solution": "import re\ncosts = []\nwith open(\"samples/demo.log\", encoding=\"utf-8\") as f:\n    for line in f:\n        if \" gateway: \" not in line:\n            continue\n        m = re.search(r\" (\\d+)ms\", line)\n        if m:\n            costs.append(int(m.group(1)))\nprint(f\"gateway 最慢 {max(costs)}ms\")",
+     "files": [
+      "samples/demo.log"
+     ]
+    }
+   ],
+   "files": [
+    "samples/demo.log"
+   ]
+  }
+ ]
+}

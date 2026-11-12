@@ -32,6 +32,20 @@ const norm = (s) => String(s).replace(/\r\n?/g, "\n").split("\n").map((l) => l.r
 const str = (v) => typeof v === "string" && v.trim() !== "";
 const ID = /^[a-z0-9-]+$/i;
 
+/** Optional learning links: [{kind: video|case|doc|community, title, url, source, note}]. */
+const KINDS = ["video", "case", "doc", "community"];
+function checkResources(list, at) {
+  if (list == null) return [];
+  if (!Array.isArray(list)) { errors.push(`${at}: "resources" must be a list`); return []; }
+  return list.map((r, i) => {
+    const a = `${at} resources[${i}]`;
+    if (!KINDS.includes(r.kind)) errors.push(`${a}: "kind" must be one of ${KINDS.join(", ")}`);
+    if (!str(r.title)) errors.push(`${a}: "title" is required`);
+    if (!/^https:\/\/\S+$/.test(r.url || "")) errors.push(`${a}: "url" must start with https://`);
+    return { kind: r.kind, title: r.title || "", url: r.url || "", source: r.source || "", note: r.note || "" };
+  });
+}
+
 const files = fs.readdirSync(lessonsDir).filter((f) => f.endsWith(".json") && !f.startsWith("_"));
 const lessons = [];
 const lessonIds = new Set();
@@ -110,7 +124,8 @@ for (const f of files) {
     if (!out.quiz.length && !out.drills.length) warnings.push(`${at}: no quiz and no drills – nothing to review later`);
     return out;
   });
-  lessons.push({ id: L.id, stage: L.stage, title: L.title, intro: L.intro || "", blocks, questions: L.questions || [] });
+  const resources = checkResources(L.resources, at0);
+  lessons.push({ id: L.id, stage: L.stage, title: L.title, intro: L.intro || "", blocks, questions: L.questions || [], resources });
 }
 if (!lessons.length && !errors.length) errors.push("lessons/: no lesson files found");
 
@@ -120,6 +135,19 @@ if (errors.length) {
   console.error(`\n${errors.length} error(s). Fix the lesson file(s) above. The website was NOT updated.`);
   process.exit(1);
 }
+
+// Course map: every planned lesson, published or not (syllabus.json).
+let syllabus = [];
+try {
+  syllabus = JSON.parse(fs.readFileSync(path.join(root, "syllabus.json"), "utf8"));
+  for (const [si, s] of syllabus.entries()) {
+    if (typeof s.stage !== "number" || !str(s.title) || !Array.isArray(s.lessons)) errors.push(`syllabus.json [${si}]: needs stage, title, lessons`);
+    for (const l of s.lessons || []) if (!str(l.id) || !str(l.title)) errors.push(`syllabus.json stage ${s.stage}: each lesson needs id and title`);
+  }
+  const planned = new Set(syllabus.flatMap((s) => (s.lessons || []).map((l) => l.id)));
+  for (const L of lessons) if (!planned.has(L.id)) errors.push(`lessons/${L.id}.json: add it to syllabus.json too`);
+} catch (e) { errors.push(`syllabus.json: ${e.message}`); }
+if (errors.length) { for (const e of errors) console.error("ERROR   " + e); process.exit(1); }
 
 // Natural sort: 1-2 before 1-10.
 lessons.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
@@ -135,7 +163,7 @@ for (const f of SITE_FILES) {
   fs.writeFileSync(path.join(outDir, f), s);
 }
 if (fs.existsSync(filesDir)) fs.cpSync(filesDir, path.join(outDir, "files"), { recursive: true });
-fs.writeFileSync(path.join(outDir, "data.json"), JSON.stringify({ built: new Date().toISOString(), lessons }));
+fs.writeFileSync(path.join(outDir, "data.json"), JSON.stringify({ built: new Date().toISOString(), lessons, syllabus }));
 fs.writeFileSync(path.join(outDir, ".nojekyll"), "");
 const n = (k) => lessons.reduce((s, l) => s + l.blocks.reduce((t, b) => t + b[k].length, 0), 0);
 console.log(`OK: ${lessons.length} lesson(s), ${n("quiz")} quiz, ${n("drills")} drills, ${runs} Python runs, ${warnings.length} warning(s) -> _site/`);

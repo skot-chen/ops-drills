@@ -4,7 +4,7 @@ You are an AI assistant (often the learner's coach). Your usual job here: **add 
 GitHub Actions runs every code snippet with real Python; if anything doesn't match, the site is not updated.
 
 - Repo: https://github.com/skot-chen/ops-drills · Live site: https://skot-chen.github.io/ops-drills/
-- Learner: Chinese native speaker with an IT-ops background (VMware/OpenStack era), practising Python for ops automation.
+- Learner: Chinese native speaker practising Python for ops automation.
   **All learner-facing text is simple Chinese.** Code identifiers stay English.
 - The lesson order and topics come from the learner's own study plan (the coach knows where). This repo is **public**: never put
   the learner's answers, plans, names or anything personal here.
@@ -18,14 +18,18 @@ GitHub Actions runs every code snippet with real Python; if anything doesn't mat
 4. Python only runs for `lang: "python"` (the default). Shell / YAML / PromQL lessons: set `"lang": "shell"` (or `yaml`, `text`)
    on the block; then examples are shown, not run, and every quiz needs an explicit `answer`.
 5. Commit message: `lesson <id>: <title>`; push to `main`.
+6. **No personal background, ever.** Never mention the learner's past jobs, employers, years of experience, career change
+   or job search — in lessons, questions, commit messages or docs. Bridge from generic tools (grep/awk/curl) instead.
+7. The lesson must already be listed in `syllabus.json` (the course map shown on the site). Keep its id/title in sync;
+   don't reorder or remove planned lessons without the owner's OK.
 
 ## Lesson design (this is what makes it work)
 Each lesson = 3–8 small **blocks**, one idea each. The site walks every block through 4 steps:
 **① 学 + 抄** (read `body`, then type the `example` by hand until the output matches) → **② 改** (`tweaks`: "change X, guess first")
 → **③ 猜** (`quiz`: guess the output, self-grade) → **④ 默写** (`drills`: write from an empty editor, auto-checked).
 
-- `body`: start from what the learner already knows (grep/awk, Zabbix, VMware/OpenStack), then ≤ 5 new ideas. A small table
-  "写法 | 意思 | 你熟悉的" works well. ~10–25 lines.
+- `body`: start from familiar command-line ops tools (grep/awk/curl, a monitoring dashboard), then ≤ 5 new ideas. A small table
+  "写法 | 意思 | 命令行里的对应" works well. ~10–25 lines.
 - `example`: 5–15 lines, realistic ops data (hosts, ports, log lines). Must run without errors. Its output is computed at build time.
 - `tweaks`: 1–3. Each asks to change one thing **and guess first**; `answer` explains *why*, linking to real ops when possible.
 - `quiz`: 1–3 short snippets (3–6 lines) with one surprise each (off-by-one, KeyError, sorted() not changing the list…).
@@ -35,14 +39,19 @@ Each lesson = 3–8 small **blocks**, one idea each. The site walks every block 
   `npm run check` fails if `expect` is given and wrong). `hints`: 2–3, from gentle to specific, never the full answer.
   `solution`: the simplest code a beginner could write (no comprehensions/lambdas unless taught). Must `print` the result.
 - `files`: data files the code reads, relative to `files/` (e.g. `["samples/demo.log"]`). Keep new data files small (< 500 KB) and deterministic.
-- `questions` (讲): exactly 3, answered in the learner's own words: one *why*, one link to their ops experience, one reflection.
+- `resources`: 3–8 links shown as 「📺 配套视频和案例」 — `{kind: video|case|doc|community, title, url, source, note}`.
+  **Videos: YouTube only.** Cases: GitHub repos/folders, Reddit, official docs. **Verify every link before adding it**:
+  YouTube via `https://www.youtube.com/oembed?url=<video url>&format=json` (must return the real title/channel — use those),
+  others must return HTTP 200. Reddit can't be checked automatically: only link subreddit home pages or wikis, never a
+  thread you haven't opened. `note` says which block it matches (e.g. 「对应 b2」) or when to watch it.
+- `questions` (讲): exactly 3, answered in the learner's own words: one *why*, one about a real-world ops situation, one reflection. Never refer to the learner's own past jobs or background.
 
 ## File format
 ```json
 {
   "id": "1-2", "stage": 1, "title": "正则表达式",
   "intro": "一两句：这课学什么、为什么。",
-  "questions": ["…为什么…？", "…你以前…？", "…"],
+  "questions": ["…为什么…？", "…真实场景里…？", "…"],
   "blocks": [
     {
       "id": "b1", "title": "第一个正则", "body": "markdown（表格、`代码`、**加粗**、列表、``` 代码块）",

@@ -51,7 +51,7 @@
   {
    "id": "b2",
    "title": "字符串",
-   "body": "日志的每一行都是一个**字符串**。最常用的几个方法：\n\n| 方法 | 作用 | 你熟悉的 |\n|---|---|---|\n| `s.strip()` | 去掉首尾空白和换行 | |\n| `s.split(\" \")` | 按空格切成列表 | `awk '{print $3}'` |\n| `s.split(\" \", 4)` | 最多切 4 刀，后面整段保留 | |\n| `s.rstrip(\":\")` | 去掉右边的 `:` | |\n| `\"timeout\" in s` | 是否包含 | `grep timeout` |\n| `s.startswith(\"2026\")` | 是否以…开头 | `grep ^2026` |\n| `s.lower()` | 转小写 | `grep -i` |\n\n方法可以**连着用**：`s.strip().lower()`。注意：Python 从 **0** 开始数，awk 从 1 开始。",
+   "body": "日志的每一行都是一个**字符串**。最常用的几个方法：\n\n| 方法 | 作用 | 命令行对应 |\n|---|---|---|\n| `s.strip()` | 去掉首尾空白和换行 | |\n| `s.split(\" \")` | 按空格切成列表 | `awk '{print $3}'` |\n| `s.split(\" \", 4)` | 最多切 4 刀，后面整段保留 | |\n| `s.rstrip(\":\")` | 去掉右边的 `:` | |\n| `\"timeout\" in s` | 是否包含 | `grep timeout` |\n| `s.startswith(\"2026\")` | 是否以…开头 | `grep ^2026` |\n| `s.lower()` | 转小写 | `grep -i` |\n\n方法可以**连着用**：`s.strip().lower()`。注意：Python 从 **0** 开始数，awk 从 1 开始。",
    "example": "line = \"  2026-11-10 09:40:01 ERROR payment-svc: connection timeout to db  \\n\"\nclean = line.strip()\nprint(clean)\nparts = clean.split(\" \")\nprint(parts)\nprint(parts[2], parts[3])\nprint(parts[3].rstrip(\":\"))\nprint(\"timeout\" in clean)",
    "tweaks": [
     {
@@ -327,6 +327,71 @@
    "files": [
     "samples/demo.log"
    ]
+  }
+ ],
+ "resources": [
+  {
+   "kind": "video",
+   "title": "Strings - Working with Textual Data",
+   "url": "https://www.youtube.com/watch?v=k9TUPpGqYTo",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应「字符串方法」"
+  },
+  {
+   "kind": "video",
+   "title": "Lists, Tuples, and Sets",
+   "url": "https://www.youtube.com/watch?v=W8KRzm-HUcc",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应「列表」"
+  },
+  {
+   "kind": "video",
+   "title": "Dictionaries - Working with Key-Value Pairs",
+   "url": "https://www.youtube.com/watch?v=daefaLgNkw0",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应「字典计数」"
+  },
+  {
+   "kind": "video",
+   "title": "Conditionals and Booleans - If, Else, and Elif",
+   "url": "https://www.youtube.com/watch?v=DZwmZ8Usvnk",
+   "source": "YouTube · Corey Schafer",
+   "note": ""
+  },
+  {
+   "kind": "video",
+   "title": "Loops and Iterations - For/While Loops",
+   "url": "https://www.youtube.com/watch?v=6iF8Xb7Z3wQ",
+   "source": "YouTube · Corey Schafer",
+   "note": ""
+  },
+  {
+   "kind": "video",
+   "title": "F-Strings - How to Use Them",
+   "url": "https://www.youtube.com/watch?v=nghuHvKLhJA",
+   "source": "YouTube · Corey Schafer",
+   "note": "对应 f\"...\" 格式化"
+  },
+  {
+   "kind": "case",
+   "title": "School of SRE：Python 基础（LinkedIn 内部新人教材）",
+   "url": "https://linkedin.github.io/school-of-sre/level101/python_web/python-concepts/",
+   "source": "GitHub · linkedin/school-of-sre",
+   "note": "SRE 视角讲 Python"
+  },
+  {
+   "kind": "case",
+   "title": "devops-exercises：Python 练习题",
+   "url": "https://github.com/bregman-arie/devops-exercises/tree/master/topics/python",
+   "source": "GitHub · bregman-arie/devops-exercises",
+   "note": "面试常见题"
+  },
+  {
+   "kind": "community",
+   "title": "r/learnpython 新手常见问题（Wiki）",
+   "url": "https://www.reddit.com/r/learnpython/wiki/index/",
+   "source": "Reddit",
+   "note": "卡住时先在这里搜，很多人问过同样的问题"
   }
  ]
 }

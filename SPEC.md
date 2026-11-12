@@ -1,7 +1,7 @@
 # Ops Drills 运维练习本 — SPEC
 
 ## Goal
-A public, zero-install practice website (GitHub Pages) for a Chinese-speaking learner with an IT-ops background who is
+A public, zero-install practice website (GitHub Pages) for a Chinese-speaking learner who is
 practising Python for ops automation. Markdown exercises in a repo were too hard to use; the learner wants to **look at content, learn it, write code from memory, bookmark, and review** — in the browser, on
 laptop or phone. Python code runs **in the browser** (Pyodide in a Web Worker), so drills are checked automatically.
 Success after 4 weeks: the learner opens the site daily, finishes "今日复习", passes most drills from memory, and the coach AI
@@ -92,3 +92,14 @@ with real Python (cwd = `files/`), stores their outputs, and fails on errors or 
 - **M1 Learn flow** — core.js (SRS, output compare, markdown-lite), Pyodide worker, block 4-step flow, home, stars; lesson 1-0. (F2–F5.2, F6.1, F8.2)
 - **M2 Review + 讲 + progress** — review queue, questions + copy, export/import/reset, lesson 1-1 with demo.log, phone pass. (F5.1, F6.2, F7, F8.1)
 - **M4 Publish** — GitHub repo + Pages + AGENTS.md (how the coach adds a lesson), link from the private study repo and the coach task.
+
+## v2 (2026-11-12) — daily loop, fun, clarity
+- **今日任务** home: ① 复习 (due items) → ② 学新内容 (daily goal 1–3 blocks, set in ⚙) → ③ 讲 (when a lesson is finished)
+  → ④ 打卡 (summary of the day + 📋 copy for the AI). Week strip (active / checked-in days), 🔥 streak, XP + levels, badges.
+- Own look (navy/indigo, not the vocabulary site's beige/green); each step has its own colour (学 blue, 改 amber, 猜 violet, 默写 teal).
+- Obvious back button on every lesson/block page; lesson progress bar; step nav sticks to the bottom of the screen.
+- 猜: typed guess is checked against the real output (✔/✗) and the matching grade is highlighted. 📋 copy-to-AI on 抄 errors,
+  every 改 prompt, every 猜 card and every failed 默写 (asks for a hint, not the answer).
+- Course map (`syllabus.json`): all 6 stages and planned lessons; unpublished ones show 「制作中」.
+- `resources` per lesson: verified YouTube videos + GitHub/Reddit/doc links.
+- New storage keys: `xp`, `log` (per-day activity), `said`, `doneAt`, `goal`. Old progress is back-filled on load.

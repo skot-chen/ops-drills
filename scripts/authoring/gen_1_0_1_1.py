@@ -77,7 +77,7 @@ print(f"{host} 内存 {mem}% ⚠")
         block("b2", "字符串", """
 日志的每一行都是一个**字符串**。最常用的几个方法：
 
-| 方法 | 作用 | 你熟悉的 |
+| 方法 | 作用 | 命令行对应 |
 |---|---|---|
 | `s.strip()` | 去掉首尾空白和换行 | |
 | `s.split(" ")` | 按空格切成列表 | `awk '{print $3}'` |
@@ -467,7 +467,7 @@ print(n)
 L11 = {
     "id": "1-1", "stage": 1, "title": "用 Python 统计日志",
     "intro": """
-以前你会这样查：`grep ERROR app.log | awk '{print $4}' | sort | uniq -c | sort -rn`。
+用命令行通常这样查：`grep ERROR app.log | awk '{print $4}' | sort | uniq -c | sort -rn`。
 这一课用 Python 做同样的事，并且处理好「脏数据」。这是 AIOps 的第一步：**把手工查日志变成程序**。
 数据都是 `samples/demo.log`（约 4300 行，09:40 左右有一次故障）。
 """,
