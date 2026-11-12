@@ -200,8 +200,13 @@ textarea.guess[readonly] { background: var(--bg); }
   background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-top: 1px solid var(--line); }
 
 #toast { position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%) translateY(20px); opacity: 0; visibility: hidden; background: var(--top); color: #fff;
-  padding: 10px 16px; border-radius: 10px; transition: transform .25s, opacity .25s, visibility .25s; z-index: 10; max-width: 90vw; text-align: center; }
+  padding: 10px 16px; border-radius: 10px; transition: transform .25s, opacity .25s, visibility .25s; z-index: 10;
+  width: max-content; max-width: min(90vw, 520px); text-align: center; line-height: 1.55; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
 .empty { text-align: center; padding: 30px 10px; color: var(--muted); }
 /* iOS zooms into inputs under 16px; keep editors at 16px on phones. */
 @media (max-width: 640px) { textarea.ed, textarea.guess, textarea.say { font-size: 16px; } }
+
+.lessons li.soon { cursor: help; }
+.soon-note { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--bg); color: var(--muted); font-size: .88rem; line-height: 1.6; }
+.soon-note b { color: var(--ink); }

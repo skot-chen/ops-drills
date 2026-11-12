@@ -317,10 +317,16 @@ function lessonList(s) {
     if (L) {
       const p = lessonProgress(L);
       ul.append(h(`<li><a href="#/l/${L.id}"><span class="lid">${esc(L.id)}</span><span class="t">${esc(L.title)}</span><span class="spacer"></span><span class="muted">${p.done === p.total ? "✅" : `${p.done}/${p.total}`}</span><span class="go">›</span></a>${bar((100 * p.done) / p.total)}</li>`));
-    } else ul.append(h(`<li class="soon"><span class="lid">${esc(it.id)}</span><span class="t">${esc(it.title)}</span><span class="spacer"></span><span class="pill">制作中</span></li>`));
+    } else {
+      const li = h(`<li class="soon" role="button" tabindex="0" title="${esc(SOON_TIP)}"><span class="lid">${esc(it.id)}</span><span class="t">${esc(it.title)}</span><span class="spacer"></span><span class="pill">制作中 ?</span></li>`);
+      li.onclick = () => toast(SOON_TIP, 5000);
+      ul.append(li);
+    }
   }
   return ul;
 }
+const SOON_TIP = "「制作中」= 这一课还没上线。你学完前一课、把「讲」的答案发给 AI 检查通过后，AI 会根据你的情况把这一课做好放上来（通常第二天早上就有）。";
+const soonNote = () => h(`<div class="soon-note"><span class="pill">制作中</span> 表示这一课<b>还没上线</b>：课是一课一课做的。学完前一课 → 在课程页最下面「讲」→ 复制答案发给 AI 检查 → 通过后，AI 就把下一课做好放上来（通常第二天早上）。这样每一课都能根据你上一课的掌握情况来调整。</div>`);
 
 function viewLessons() {
   const el = h(`<div><h1>课程</h1>
@@ -346,6 +352,7 @@ function viewStage(s) {
     ${bar(st.total ? (100 * st.done) / st.total : 0)}</div>`));
   const card = h(`<div class="card"><h2 style="margin-top:0">课</h2></div>`);
   card.append(lessonList(s));
+  if (st.pub.length < s.lessons.length) card.append(soonNote());
   el.append(card);
   const nav = h(`<div class="row"></div>`);
   if (prev) nav.append(h(`<a class="btn" href="#/stage/${prev.stage}">← 阶段 ${prev.stage}</a>`));
